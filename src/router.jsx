@@ -10,6 +10,8 @@ import Products from './pages/admin/Products';
 import Categories from './pages/admin/Categories';
 import AddCategory from './pages/admin/categories/AddCategory';
 import EditCategory from './pages/admin/categories/EditCategory';
+import Users from './pages/admin/Users';
+import AddUser from './pages/admin/users/AddUser';
 
 /**
  * Cấu hình router cho ứng dụng
@@ -69,7 +71,20 @@ const router = createBrowserRouter([
           {
             path: 'categories/:id/edit',
             element: <EditCategory />
-          }
+          },
+          {
+            // Trang quản lý người dùng
+            path: 'users',
+            element: <Users />
+          },
+          {
+            path: 'users/add',
+            element: <AddUser />
+          },
+          // {
+          //   path: 'users/:id/edit',
+          //   element: <EditUser />
+          // }
         ]
       },
 
