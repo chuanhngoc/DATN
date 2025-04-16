@@ -13,7 +13,7 @@ const Categories = () => {
     });
     //xóa
     const deleteMutation = useMutation({
-        mutationFn: (id) => categoryService.delete(id),
+        mutationFn: async (id) => await categoryService.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             toast.success('Xóa danh mục thành công');
@@ -77,21 +77,24 @@ const Categories = () => {
                                 <td className="px-6 py-4">{category.id}</td>
                                 <td className="px-6 py-4">{category.name}</td>
                                 <td className="px-6 py-4">
-                                    <Link
-                                        to={`/admin/categories/${category.id}/edit`}
-                                        className="text-blue-600 hover:text-blue-900 mr-3 flex items-center gap-1"
-                                    >
-                                        <Edit2 size={18} />
-                                        Sửa
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDelete(category.id)}
-                                        className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                                        disabled={deleteMutation.isPending}
-                                    >
-                                        <Trash2 size={18} />
-                                        {deleteMutation.isPending ? 'Đang xóa...' : 'Xóa'}
-                                    </button>
+                                    {category.id !== 1 && <>
+
+                                        <Link
+                                            to={`/admin/categories/${category.id}/edit`}
+                                            className="text-blue-600 hover:text-blue-900 mr-3 flex items-center gap-1"
+                                        >
+                                            <Edit2 size={18} />
+                                            Sửa
+                                        </Link>
+                                        <button
+                                            onClick={() => handleDelete(category.id)}
+                                            className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                                            disabled={deleteMutation.isPending}
+                                        >
+                                            <Trash2 size={18} />
+                                            {deleteMutation.isPending ? 'Đang xóa...' : 'Xóa'}
+                                        </button></>}
+
                                 </td>
                             </tr>
                         ))}

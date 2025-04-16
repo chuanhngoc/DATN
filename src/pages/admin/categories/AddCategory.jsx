@@ -3,6 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import categoryService from '../../../services/categoryService';
+import { toast } from 'react-toastify';
 
 // Schema validation cho form
 const categorySchema = z.object({
@@ -13,15 +16,25 @@ const categorySchema = z.object({
 
 const AddCategory = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(categorySchema)
   });
 
+  const addMutation = useMutation({
+    mutationFn: (data) => categoryService.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Thêm danh mục thành công');
+      navigate('/admin/categories');
+    },
+    onError: () => {
+      toast.error('Thêm danh mục thất bại');
+    }
+  });
+
   const onSubmit = (data) => {
-    // TODO: Gọi API thêm danh mục
-    console.log('Thêm danh mục:', data);
-    // Sau khi thêm thành công, quay lại trang danh sách
-    navigate('/admin/categories');
+    addMutation.mutate(data);
   };
 
   return (
@@ -55,9 +68,10 @@ const AddCategory = () => {
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+          disabled={addMutation.isPending}
         >
           <Plus size={20} />
-          Thêm danh mục
+          {addMutation.isPending ? 'Đang thêm...' : 'Thêm danh mục'}
         </button>
       </form>
     </div>
