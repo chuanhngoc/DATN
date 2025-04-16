@@ -1,12 +1,12 @@
 import instance from './instance';
 
 const categoryService = {
-  getAll: () => {
-    return instance.get('/categories');
+  getAll: async () => {
+    return (await instance.get('/categories')).data?.data;
   },
 
-  getById: (id) => {
-    return instance.get(`/categories/${id}`);
+  getById: async (id) => {
+    return (await instance.get(`/categories/${id}`)).data;
   },
 
   create: (data) => {
