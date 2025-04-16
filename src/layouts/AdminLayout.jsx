@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Tag, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, Users, LogOut, Ruler, Palette } from 'lucide-react';
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -37,6 +37,20 @@ const AdminLayout = () => {
           >
             <Tag className="w-5 h-5 mr-2" />
             Danh mục
+          </Link>
+          <Link
+            to="/admin/colors"
+            className={`flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 ${isActive('/admin/colors')}`}
+          >
+            <Palette className="w-5 h-5 mr-2" />
+            Màu sắc
+          </Link>
+          <Link
+            to="/admin/sizes"
+            className={`flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 ${isActive('/admin/sizes')}`}
+          >
+            <Ruler className="w-5 h-5 mr-2" />
+            Kích thước
           </Link>
           <Link
             to="/admin/users"

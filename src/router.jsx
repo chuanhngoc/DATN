@@ -12,7 +12,9 @@ import AddCategory from './pages/admin/categories/AddCategory';
 import EditCategory from './pages/admin/categories/EditCategory';
 import Users from './pages/admin/Users';
 import AddUser from './pages/admin/users/AddUser';
-
+import Color from './pages/admin/Color';
+import AddColor from './pages/admin/colors/AddColor';
+import EditColor from './pages/admin/colors/EditColor';
 /**
  * Cấu hình router cho ứng dụng
  * Sử dụng createBrowserRouter để tạo router với các route được bảo vệ
@@ -80,6 +82,20 @@ const router = createBrowserRouter([
           {
             path: 'users/add',
             element: <AddUser />
+          },
+
+          {
+            // Trang quản lý màu
+            path: 'colors',
+            element: <Color />
+          },
+          {
+            path: 'colors/add',
+            element: <AddColor />
+          },
+          {
+            path: 'colors/edit/:id',
+            element: <EditColor />
           },
           // {
           //   path: 'users/:id/edit',
