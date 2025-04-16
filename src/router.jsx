@@ -81,10 +81,10 @@ const router = createBrowserRouter([
             path: 'users/add',
             element: <AddUser />
           },
-          // {
-          //   path: 'users/:id/edit',
-          //   element: <EditUser />
-          // }
+          {
+            path: 'users/:id/edit',
+            element: <EditUser />
+          }
         ]
       },
 
