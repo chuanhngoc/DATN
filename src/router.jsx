@@ -15,6 +15,9 @@ import AddUser from './pages/admin/users/AddUser';
 import Color from './pages/admin/Color';
 import AddColor from './pages/admin/colors/AddColor';
 import EditColor from './pages/admin/colors/EditColor';
+import Size from './pages/admin/Size';
+import AddSize from './pages/admin/sizes/AddSize';
+import EditSize from './pages/admin/sizes/EditSize';
 /**
  * Cấu hình router cho ứng dụng
  * Sử dụng createBrowserRouter để tạo router với các route được bảo vệ
@@ -96,6 +99,19 @@ const router = createBrowserRouter([
           {
             path: 'colors/edit/:id',
             element: <EditColor />
+          },
+          {
+            // Trang quản lý size
+            path: 'sizes',
+            element: <Size />
+          },
+          {
+            path: 'sizes/add',
+            element: <AddSize />
+          },
+          {
+            path: 'sizes/edit/:id',
+            element: <EditSize />
           },
           // {
           //   path: 'users/:id/edit',
