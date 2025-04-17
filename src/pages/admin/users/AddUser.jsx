@@ -12,23 +12,44 @@ const userSchema = z.object({
   email: z.string()
     .email('Email không hợp lệ'),
   password: z.string()
-    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+    .min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+  password_confirmation: z.string()
+    .min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+  phone: z.string()
+    .min(10, 'Số điện thoại phải có ít nhất 10 số')
+    .max(11, 'Số điện thoại không được quá 11 số'),
+  address: z.string()
+    .min(10, 'Địa chỉ phải có ít nhất 10 ký tự')
+    .max(200, 'Địa chỉ không được quá 200 ký tự'),
   role: z.enum(['admin', 'user'], {
     required_error: 'Vui lòng chọn vai trò'
   })
+}).refine((data) => data.password === data.password_confirmation, {
+  message: "Mật khẩu không khớp",
+  path: ["password_confirmation"],
 });
 
 const AddUser = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(userSchema)
   });
 
+  const addMutation = useMutation({
+    mutationFn: userService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Thêm người dùng thành công');
+      navigate('/admin/users');
+    },
+    onError: () => {
+      toast.error('Thêm người dùng thất bại');
+    }
+  });
   const onSubmit = (data) => {
-    // TODO: Gọi API thêm người dùng
-    console.log('Thêm người dùng:', data);
-    // Sau khi thêm thành công, quay lại trang danh sách
-    navigate('/admin/users');
+    addMutation.mutate(data);
   };
 
   return (
@@ -91,6 +112,51 @@ const AddUser = () => {
 
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
+            Xác nhận mật khẩu
+          </label>
+          <input
+            {...register('password_confirmation')}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="password"
+            placeholder="Nhập lại mật khẩu"
+          />
+          {errors.password_confirmation && (
+            <p className="text-red-500 text-xs italic mt-1">{errors.password_confirmation.message}</p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Số điện thoại
+          </label>
+          <input
+            {...register('phone')}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="tel"
+            placeholder="Nhập số điện thoại"
+          />
+          {errors.phone && (
+            <p className="text-red-500 text-xs italic mt-1">{errors.phone.message}</p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Địa chỉ
+          </label>
+          <textarea
+            {...register('address')}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Nhập địa chỉ"
+            rows={3}
+          />
+          {errors.address && (
+            <p className="text-red-500 text-xs italic mt-1">{errors.address.message}</p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
             Vai trò
           </label>
           <select
@@ -109,9 +175,10 @@ const AddUser = () => {
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+          disabled={addMutation.isPending}
         >
           <Plus size={20} />
-          Thêm người dùng
+          {addMutation.isPending ? 'Đang thêm...' : 'Thêm người dùng'}
         </button>
       </form>
     </div>
