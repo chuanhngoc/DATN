@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import productsService from '../../services/products';
 import { toast } from 'react-toastify';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Products = () => {
+  const navigate = useNavigate();
   const { data: products, isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
@@ -32,9 +34,11 @@ const Products = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý sản phẩm</h1>
-        <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-          Thêm sản phẩm
-        </button>
+        <Link to="/admin/products/add">
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            Thêm sản phẩm
+          </button>
+        </Link>
       </div>
 
       {/* Search and Filter */}
@@ -99,7 +103,12 @@ const Products = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Sửa</button>
+                  <button 
+                    onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                    className="text-blue-600 hover:text-blue-900 mr-3"
+                  >
+                    Sửa
+                  </button>
                   <button className="text-red-600 hover:text-red-900">Xóa</button>
                 </td>
               </tr>

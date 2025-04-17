@@ -19,10 +19,9 @@ import AddSize from './pages/admin/sizes/AddSize';
 import EditSize from './pages/admin/sizes/EditSize';
 import Login from './pages/Login';
 import Register from './pages/Register';
-/**
- * Cấu hình router cho ứng dụng
- * Sử dụng createBrowserRouter để tạo router với các route được bảo vệ
- */
+import AddProduct from './pages/admin/products/AddProduct';
+import EditProduct from './pages/admin/products/EditProduct';
+
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -69,6 +68,16 @@ const router = createBrowserRouter([
             // Trang dashboard của admin
             path: 'products',
             element: <Products />
+          },
+          {
+            // Trang quản lý sản phẩm
+            path: 'products/add',
+            element: <AddProduct />
+          },
+          {
+            // Trang quản lý sản phẩm
+            path: 'products/edit/:id',
+            element: <EditProduct />
           },
           {
             path: 'categories',
