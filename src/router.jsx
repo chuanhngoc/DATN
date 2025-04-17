@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import AdminDashboard from './pages/AdminDashboard';
 import PrivateRoute from './components/PrivateRoute';
-import Login from './pages/Login';
 import Products from './pages/admin/Products';
 import Categories from './pages/admin/Categories';
 import AddCategory from './pages/admin/categories/AddCategory';
@@ -18,6 +17,8 @@ import EditColor from './pages/admin/colors/EditColor';
 import Size from './pages/admin/Size';
 import AddSize from './pages/admin/sizes/AddSize';
 import EditSize from './pages/admin/sizes/EditSize';
+import Login from './pages/Login';
+import Register from './pages/Register';
 /**
  * Cấu hình router cho ứng dụng
  * Sử dụng createBrowserRouter để tạo router với các route được bảo vệ
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
         // Trang đăng nhập
         path: 'login',
         element: <Login />
+      },
+      {
+        path: 'register',
+        element: <Register />
       }
     ]
   },
