@@ -19,7 +19,7 @@ const Register = () => {
   const navigate = useNavigate();
 
   // Hàm xử lý thay đổi input
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -28,7 +28,7 @@ const Register = () => {
   };
 
   // Hàm xử lý khi submit form
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Kiểm tra form trống

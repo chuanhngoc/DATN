@@ -3,7 +3,7 @@ import { instanceLocal } from './instance';
 const authService = {
     // Đăng nhập
     login: async (data) => {
-        const response = await instanceLocal.post('/auth/login', data);
+        const response = await instanceLocal.post('/login', data);
         // Lưu token vào localStorage
         if (response.data.accessToken) {
             localStorage.setItem('token', response.data.accessToken);
@@ -13,7 +13,7 @@ const authService = {
 
     // Đăng ký
     register: async (data) => {
-        const response = await instanceLocal.post('/auth/register', data);
+        const response = await instanceLocal.post('/signup', data);
         return response.data;
     },
 
