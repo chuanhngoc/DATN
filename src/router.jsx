@@ -129,7 +129,7 @@ const router = createBrowserRouter([
             element: <EditSize />
           },
           {
-            path: 'users/:id/edit',
+            path: 'users/edit/:id',
             element: <EditUser />
           }
         ]
