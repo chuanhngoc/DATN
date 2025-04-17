@@ -5,7 +5,7 @@ const authService = {
     login: async (data) => {
         const response = await instanceLocal.post('/login', data);
         // Lưu token vào localStorage
-        if (response.data.accessToken) {
+        if (response.data) {
             localStorage.setItem('token', JSON.stringify(response.data));
         }
         return response.data;
