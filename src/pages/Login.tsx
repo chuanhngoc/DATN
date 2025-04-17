@@ -15,33 +15,37 @@ const Login = () => {
   // Hàm xử lý khi submit form
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Kiểm tra form trống
     if (!email || !password) {
-      setError('Vui lòng điền đầy đủ thông tin!');
-      return;
+        setError('Vui lòng điền đầy đủ thông tin!');
+        return;
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 8) {
+        setError('Mật khẩu phải có ít nhất 8 ký tự!');
+        return;
     }
 
     try {
-      setLoading(true);
-      setError('');
-      
-      // Gọi API đăng nhập
-      await authService.login({ email, password });
-      
-      // Hiển thị thông báo thành công
-      toast.success('Đăng nhập thành công!');
+        setLoading(true);
+        setError('');
 
-      // Chuyển hướng về trang chủ
-      navigate('/');
+        // Gọi API đăng nhập
+        const res = await authService.login({ email, password });
+
+        // Hiển thị thông báo thành công
+        toast.success('Đăng nhập thành công!');
+
+        // Chuyển hướng về trang chủ
+        navigate('/');
     } catch (err: any) {
-      // Hiển thị lỗi
-      setError(err.response?.data?.message || 'Đăng nhập thất bại!');
-      toast.error(err.response?.data?.message || 'Đăng nhập thất bại!');
-    } finally {
-      setLoading(false);
+        // Hiển thị lỗi
+        setError(err.response?.data?.message || 'Đăng nhập thất bại!');
+        toast.error(err.response?.data?.message || 'Đăng nhập thất bại!');
     }
-  };
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
