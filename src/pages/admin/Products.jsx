@@ -1,43 +1,44 @@
+import { useQuery } from '@tanstack/react-query';
+import productsService from '../../services/products';
+import { toast } from 'react-toastify';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Products = () => {
-  // Dữ liệu sản phẩm (có thể lấy từ API)
-  const products = [
-    {
-      id: 1,
-      name: 'Giày Sneaker Nam',
-      category: 'Sneaker',
-      price: '1.500.000đ',
-      stock: 50,
-      status: 'Còn hàng',
-      image: 'https://images.unsplash.com/photo-1600269452121-4f2416e55c28?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1965&q=80'
-    },
-    {
-      id: 2,
-      name: 'Giày Thể Thao Nữ',
-      category: 'Thể thao',
-      price: '1.200.000đ',
-      stock: 30,
-      status: 'Còn hàng',
-      image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
-    },
-    {
-      id: 3,
-      name: 'Giày Cao Cấp',
-      category: 'Cao cấp',
-      price: '3.000.000đ',
-      stock: 10,
-      status: 'Sắp hết',
-      image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80'
+  const navigate = useNavigate();
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const response = await productsService.getAllProducts();
+      return response.data;
     }
-  ];
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    toast.error('Có lỗi xảy ra khi tải dữ liệu');
+    return (
+      <div className="text-center text-red-500">
+        Đã có lỗi xảy ra khi tải dữ liệu
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý sản phẩm</h1>
-        <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-          Thêm sản phẩm
-        </button>
+        <Link to="/admin/products/add">
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            Thêm sản phẩm
+          </button>
+        </Link>
       </div>
 
       {/* Search and Filter */}
@@ -63,46 +64,51 @@ const Products = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Danh mục</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tồn kho</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => (
+            {products?.map((product) => (
               <tr key={product.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      <img className="h-10 w-10 rounded-full object-cover" src={product.image} alt={product.name} />
+                      <img 
+                        className="h-10 w-10 rounded-full object-cover" 
+                        src={`${import.meta.env.VITE_API_URL}/${product.main_image}`} 
+                        alt={product.name} 
+                      />
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{product.name}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{product.category}</div>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">{product.description}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{product.price}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{product.stock}</div>
+                  <div className="text-sm text-gray-900">{product.category_id}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    product.status === 'Còn hàng' 
+                    product.is_active 
                       ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
                   }`}>
-                    {product.status}
+                    {product.is_active ? 'Đang bán' : 'Ngừng bán'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Sửa</button>
+                  <button 
+                    onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                    className="text-blue-600 hover:text-blue-900 mr-3"
+                  >
+                    Sửa
+                  </button>
                   <button className="text-red-600 hover:text-red-900">Xóa</button>
                 </td>
               </tr>
@@ -114,7 +120,7 @@ const Products = () => {
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <div className="text-sm text-gray-700">
-          Hiển thị <span className="font-medium">1</span> đến <span className="font-medium">3</span> của <span className="font-medium">3</span> kết quả
+          Hiển thị <span className="font-medium">1</span> đến <span className="font-medium">{products?.length || 0}</span> của <span className="font-medium">{products?.length || 0}</span> kết quả
         </div>
         <div className="flex space-x-2">
           <button className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">

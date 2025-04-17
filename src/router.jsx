@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import AdminDashboard from './pages/AdminDashboard';
 import PrivateRoute from './components/PrivateRoute';
-import Login from './pages/Login';
 import Products from './pages/admin/Products';
 import Categories from './pages/admin/Categories';
 import AddCategory from './pages/admin/categories/AddCategory';
@@ -19,10 +18,11 @@ import Size from './pages/admin/Size';
 import AddSize from './pages/admin/sizes/AddSize';
 import EditSize from './pages/admin/sizes/EditSize';
 import EditUser from './pages/admin/users/EditUser';
-/**
- * Cấu hình router cho ứng dụng
- * Sử dụng createBrowserRouter để tạo router với các route được bảo vệ
- */
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AddProduct from './pages/admin/products/AddProduct';
+import EditProduct from './pages/admin/products/EditProduct';
+
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -43,6 +43,10 @@ const router = createBrowserRouter([
         // Trang đăng nhập
         path: 'login',
         element: <Login />
+      },
+      {
+        path: 'register',
+        element: <Register />
       }
     ]
   },
@@ -65,6 +69,16 @@ const router = createBrowserRouter([
             // Trang dashboard của admin
             path: 'products',
             element: <Products />
+          },
+          {
+            // Trang quản lý sản phẩm
+            path: 'products/add',
+            element: <AddProduct />
+          },
+          {
+            // Trang quản lý sản phẩm
+            path: 'products/edit/:id',
+            element: <EditProduct />
           },
           {
             path: 'categories',
