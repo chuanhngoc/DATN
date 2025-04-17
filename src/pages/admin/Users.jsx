@@ -1,22 +1,57 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Trash2, Plus } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import userService from '../../services/userService';
 
 const Users = () => {
   // mảng chứa danh sách các người dùng
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Nguyễn Văn A', email: 'vana@example.com', role: 'admin' },
-    { id: 2, name: 'Trần Thị B', email: 'thib@example.com', role: 'user' },
-    { id: 3, name: 'Lê Văn C', email: 'vanc@example.com', role: 'user' }
-  ]);
+  // gọi api lấy danh sách người dùng
+  const { data: users = [], isLoading, error } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => await userService.getAll()
+  });
+
+  // hàm xóa người dùng
+  const deleteMutation = useMutation({
+    mutationFn: userService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Xóa người dùng thành công');
+    },
+    onError: () => {
+      toast.error('Xóa người dùng thất bại');
+    }
+  });
 
   // hàm xóa người dùng
   const handleDelete = (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa?')) {
-      setUsers(users.filter(user => user.id !== id));
+    if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
+      deleteMutation.mutate(id);
     }
   };
 
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-10 bg-gray-200 rounded w-full mb-4"></div>
+          <div className="h-10 bg-gray-200 rounded w-full mb-4"></div>
+          <div className="h-10 bg-gray-200 rounded w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-red-500">Có lỗi xảy ra khi tải danh sách người dùng</div>
+      </div>
+    );
+  }
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -43,7 +78,7 @@ const Users = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users.map(user => (
+            {users?.data?.map(user => (
               <tr key={user.id}>
                 <td className="px-6 py-4">{user.id}</td>
                 <td className="px-6 py-4">{user.name}</td>
