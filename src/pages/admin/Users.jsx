@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Edit2, Trash2, Plus } from 'lucide-react';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import userService from '../../services/userService';
+import { toast } from 'react-toastify';
 
 const Users = () => {
-  // mảng chứa danh sách các người dùng
+  const queryClient = useQueryClient();
+
   // gọi api lấy danh sách người dùng
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -24,14 +25,14 @@ const Users = () => {
     }
   });
 
-  // hàm xóa người dùng
+  // hàm xử lý xóa
   const handleDelete = (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       deleteMutation.mutate(id);
     }
   };
 
-
+  // nếu đang loading thì hiển thị skeleton
   if (isLoading) {
     return (
       <div className="p-6">
@@ -45,6 +46,7 @@ const Users = () => {
     );
   }
 
+  // nếu có lỗi thì hiển thị thông báo
   if (error) {
     return (
       <div className="p-6">
@@ -52,6 +54,7 @@ const Users = () => {
       </div>
     );
   }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -65,7 +68,6 @@ const Users = () => {
         </Link>
       </div>
 
-      {/* bảng hiển thị danh sách người dùng */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
@@ -73,39 +75,43 @@ const Users = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ảnh</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vai trò</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users?.data?.map(user => (
+            {users?.data?.map((user) => (
               <tr key={user.id}>
-                <td className="px-6 py-4">{user.id}</td>
-                <td className="px-6 py-4">{user.name}</td>
-                <td className="px-6 py-4">{user.email}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
-                  }`}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.id}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"> <img src={`http://127.0.0.1:8000/storage/${user.avatar}`} alt="Ảnh người dùng" className="w-10 h-10 rounded-full" /> </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                    }`}>
                     {user.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <Link
-                    to={`/admin/users/${user.id}/edit`}
-                    className="text-blue-600 hover:text-blue-900 mr-3 flex items-center gap-1"
-                  >
-                    <Edit2 size={18} />
-                    Sửa
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                  >
-                    <Trash2 size={18} />
-                    Xóa
-                  </button>
-                </td>
+                {
+                  user.role !== 'admin' && <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        to={`/admin/users/edit/${user.id}`}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <Edit2 size={20} />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  </td>
+                }
               </tr>
             ))}
           </tbody>
