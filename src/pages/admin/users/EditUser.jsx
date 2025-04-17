@@ -3,7 +3,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Edit2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import userService from '../../../services/userService';
+import { useEffect } from 'react';
 
 // Schema validation cho form
 const userSchema = z.object({
@@ -12,6 +15,12 @@ const userSchema = z.object({
     .max(50, 'Tên không được quá 50 ký tự'),
   email: z.string()
     .email('Email không hợp lệ'),
+  phone: z.string()
+    .min(10, 'Số điện thoại phải có ít nhất 10 số')
+    .max(11, 'Số điện thoại không được quá 11 số'),
+  address: z.string()
+    .min(10, 'Địa chỉ phải có ít nhất 10 ký tự')
+    .max(200, 'Địa chỉ không được quá 200 ký tự'),
   role: z.enum(['admin', 'user'], {
     required_error: 'Vui lòng chọn vai trò'
   })
@@ -20,47 +29,48 @@ const userSchema = z.object({
 const EditUser = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm({
     resolver: zodResolver(userSchema)
   });
 
   // Lấy thông tin người dùng từ API
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        // TODO: Gọi API lấy thông tin người dùng theo id
-        // Đây là dữ liệu mẫu, thay thế bằng API call thực tế
-        const mockUser = {
-          id: parseInt(id),
-          name: 'Nguyễn Văn A',
-          email: 'vana@example.com',
-          role: 'admin'
-        };
-        setUser(mockUser);
-        setValue('name', mockUser.name);
-        setValue('email', mockUser.email);
-        setValue('role', mockUser.role);
-      } catch (error) {
-        console.error('Lỗi khi lấy thông tin người dùng:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ['user', id],
+    queryFn: async () => await userService.getById(id)
+  });
 
-    fetchUser();
-  }, [id, setValue]);
+  // Cập nhật form khi có dữ liệu
+  useEffect(() => {
+    if (user) {
+      setValue('name', user.name);
+      setValue('email', user.email);
+      setValue('phone', user.phone);
+      setValue('address', user.address);
+      setValue('role', user.role);
+    }
+  }, [user, setValue]);
+
+  // Mutation để cập nhật người dùng
+  const updateMutation = useMutation({
+    mutationFn: (data) => userService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user', id] });
+      toast.success('Cập nhật người dùng thành công');
+      navigate('/admin/users');
+    },
+    onError: () => {
+      toast.error('Cập nhật người dùng thất bại');
+    }
+  });
 
   const onSubmit = (data) => {
-    // TODO: Gọi API cập nhật người dùng
-    console.log('Cập nhật người dùng:', { id, ...data });
-    // Sau khi cập nhật thành công, quay lại trang danh sách
-    navigate('/admin/users');
+    updateMutation.mutate(data);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-6">
         <div className="animate-pulse">
@@ -71,10 +81,10 @@ const EditUser = () => {
     );
   }
 
-  if (!user) {
+  if (error) {
     return (
       <div className="p-6">
-        <div className="text-red-500">Không tìm thấy người dùng</div>
+        <div className="text-red-500">Có lỗi xảy ra khi tải thông tin người dùng</div>
         <button
           onClick={() => navigate('/admin/users')}
           className="mt-4 text-gray-600 hover:text-gray-900"
@@ -130,6 +140,36 @@ const EditUser = () => {
 
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
+            Số điện thoại
+          </label>
+          <input
+            {...register('phone')}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="tel"
+            placeholder="Nhập số điện thoại"
+          />
+          {errors.phone && (
+            <p className="text-red-500 text-xs italic mt-1">{errors.phone.message}</p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Địa chỉ
+          </label>
+          <textarea
+            {...register('address')}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Nhập địa chỉ"
+            rows={3}
+          />
+          {errors.address && (
+            <p className="text-red-500 text-xs italic mt-1">{errors.address.message}</p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
             Vai trò
           </label>
           <select
@@ -148,9 +188,10 @@ const EditUser = () => {
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+          disabled={updateMutation.isPending}
         >
           <Edit2 size={20} />
-          Cập nhật người dùng
+          {updateMutation.isPending ? 'Đang cập nhật...' : 'Cập nhật người dùng'}
         </button>
       </form>
     </div>
