@@ -10,11 +10,19 @@ const userService = {
         return response.data;
     },
     create: async (data) => {
-        const response = await instance.post('/users', data);
+        const response = await instance.post('/users', data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     },
     update: async (id, data) => {
-        const response = await instance.put(`/users/${id}`, data);
+        const response = await instance.put(`/users/${id}`, data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     },
     delete: async (id) => {
