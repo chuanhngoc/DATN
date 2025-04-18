@@ -18,7 +18,7 @@ const userService = {
         return response.data;
     },
     update: async (id, data) => {
-        const response = await instance.put(`/users/${id}`, data, {
+        const response = await instance.post(`/users/${id}`, data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },

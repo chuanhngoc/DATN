@@ -48,7 +48,7 @@ const EditUser = () => {
         setValue('address', data.address);
         setValue('role', data.role);
         if (data.avatar) {
-          setPreviewUrl(`${import.meta.env.VITE_API_URL}/${data.avatar}`);
+          setPreviewUrl(`http://127.0.0.1:8000/storage/${data.avatar}`);
         }
       } catch (err) {
         setError(err.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin người dùng');
@@ -77,6 +77,7 @@ const EditUser = () => {
       formData.append('phone', data.phone);
       formData.append('address', data.address);
       formData.append('role', data.role);
+      formData.append('_method', "PUT");
       if (avatar) {
         formData.append('avatar', avatar);
       }
