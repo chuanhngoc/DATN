@@ -213,8 +213,8 @@ const ProductVariant = () => {
                                 key={pageNumber}
                                 onClick={() => setPage(pageNumber)}
                                 className={`px-4 py-2 text-sm rounded-lg ${pageNumber === page
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {pageNumber}
@@ -226,7 +226,7 @@ const ProductVariant = () => {
 
             {/* Modal thêm/sửa biến thể */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-opacity-50 bg-[#00000033] flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold">
@@ -250,6 +250,7 @@ const ProductVariant = () => {
                                     Màu sắc <span className="text-red-500">*</span>
                                 </label>
                                 <select
+                                    disabled={editingVariant}
                                     value={formData.color_id}
                                     onChange={(e) => setFormData({ ...formData, color_id: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -269,6 +270,7 @@ const ProductVariant = () => {
                                     Kích thước <span className="text-red-500">*</span>
                                 </label>
                                 <select
+                                    disabled={editingVariant}
                                     value={formData.size_id}
                                     onChange={(e) => setFormData({ ...formData, size_id: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
