@@ -31,7 +31,6 @@ const AddProduct = () => {
   const [variations, setVariations] = useState([
     { color_id: '', size_id: '', price: '', sale_price: '' }
   ]);
-
   // Query lấy danh sách danh mục
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -70,7 +69,14 @@ const AddProduct = () => {
       });
 
       // Thêm biến thể sản phẩm
-      formDataWithImages.append('variations', JSON.stringify(variations));
+      variations.forEach((variation, index) => {
+        formDataWithImages.append(`variations[${index}][color_id]`, variation.color_id);
+        formDataWithImages.append(`variations[${index}][size_id]`, variation.size_id);
+        formDataWithImages.append(`variations[${index}][price]`, variation.price);
+        if (variation.sale_price) {
+          formDataWithImages.append(`variations[${index}][sale_price]`, variation.sale_price);
+        }
+      });
 
       return productsService.createProduct(formDataWithImages);
     },
