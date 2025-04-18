@@ -1,9 +1,6 @@
 import HomeSlider from '../components/HomeSlider';
+import Products from '../components/Products';
 
-/**
- * Component Home - Trang chủ của website
- * @returns {JSX.Element} - Giao diện trang chủ với slider và các section khác
- */
 const Home = () => {
   return (
     <div>
@@ -14,6 +11,7 @@ const Home = () => {
       <div className="container mx-auto px-4 py-12">
         <h2 className="text-3xl font-bold text-center mb-8">Sản phẩm nổi bật</h2>
         {/* Thêm danh sách sản phẩm ở đây */}
+        <Products />
       </div>
     </div>
   );
