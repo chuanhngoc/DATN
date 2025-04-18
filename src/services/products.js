@@ -84,6 +84,61 @@ const getById = async (id) => {
     }
 };
 
+
+const getProductImages = async (id) => {
+    try {
+        const response = await instance.get(`/products/${id}/images`); // DELETE request xoá ảnh
+        return response.data; // Trả về dữ liệu phản hồi sau khi xoá ảnh
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
+
+const deleteProductImage = async (id) => {
+    try {
+        const response = await instance.delete(`/products/${id}/images`); // DELETE request xoá ảnh
+        return response.data; // Trả về dữ liệu phản hồi sau khi xoá ảnh
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
+
+const uploadProductImages = async (id, data) => {
+    try {
+        const response = await instance.post(`/products/${id}/images`, data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }); // DELETE request xoá ảnh
+        return response.data; // Trả về dữ liệu phản hồi sau khi xoá ảnh
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
+
+const createProductVariant = async (id, data) => {
+    try {
+        const response = await instance.post(`/products/${id}/images`, data); //thêm biến thể
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
+
+const updateProductVariant = async (id, data) => {
+    try {
+        const response = await instance.put(`/products/${id}/images`, data); //thêm biến thể
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
+
 export default {
     getAllProducts,
     createProduct,
@@ -91,5 +146,10 @@ export default {
     addVariation,
     deleteVariation,
     deleteImage,
-    getById
+    getById,
+    getProductImages,
+    uploadProductImages,
+    deleteProductImage,
+    createProductVariant,
+    updateProductVariant
 };

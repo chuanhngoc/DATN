@@ -76,10 +76,10 @@ const Products = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      <img 
-                        className="h-10 w-10 rounded-full object-cover" 
-                        src={`${import.meta.env.VITE_API_URL}/${product.main_image}`} 
-                        alt={product.name} 
+                      <img
+                        className="h-10 w-10 rounded-full object-cover"
+                        src={`${import.meta.env.VITE_API_URL}/${product.main_image}`}
+                        alt={product.name}
                       />
                     </div>
                     <div className="ml-4">
@@ -94,22 +94,29 @@ const Products = () => {
                   <div className="text-sm text-gray-900">{product.category_id}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    product.is_active 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.is_active
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}>
                     {product.is_active ? 'Đang bán' : 'Ngừng bán'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button 
-                    onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    Sửa
-                  </button>
-                  <button className="text-red-600 hover:text-red-900">Xóa</button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      Sửa
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">Xóa</button>
+                    <Link to={'/admin/product/variant/' + product.id} className="text-green-600 hover:text-green-800">
+                      Quản lý biến thể
+                    </Link>
+                    <Link to={'/admin/product/image/' + product.id} className="text-purple-600 hover:text-purple-800">
+                      Quản lý hình ảnh
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

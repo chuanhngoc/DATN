@@ -22,7 +22,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
-
+import ProductImage from './pages/admin/products/ProductImage';
+import ProductVariant from './pages/admin/products/ProductVariant';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -79,6 +80,15 @@ const router = createBrowserRouter([
             // Trang quản lý sản phẩm
             path: 'products/edit/:id',
             element: <EditProduct />
+          },
+          {
+            // Trang quản lý sản phẩm
+            path: 'product/image/:id',
+            element: <ProductImage />
+          }, {
+            // Trang quản lý sản phẩm
+            path: 'product/variant/:id',
+            element: <ProductVariant />
           },
           {
             path: 'categories',
