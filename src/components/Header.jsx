@@ -84,10 +84,7 @@ const Header = () => {
           <ul className="flex items-center justify-center space-x-8">
             <li><Link to="/" className="text-gray-600 hover:text-red-500 font-medium">Trang chủ</Link></li>
             <li><Link to="/products" className="text-gray-600 hover:text-red-500 font-medium">Sản phẩm</Link></li>
-            <li><Link to="/men" className="text-gray-600 hover:text-red-500 font-medium">Nam</Link></li>
-            <li><Link to="/women" className="text-gray-600 hover:text-red-500 font-medium">Nữ</Link></li>
             <li><Link to="/sale" className="text-red-500 font-medium">Khuyến mãi</Link></li>
-            <li><Link to="/contact" className="text-gray-600 hover:text-red-500 font-medium">Liên hệ</Link></li>
           </ul>
         </nav>
       </div>
