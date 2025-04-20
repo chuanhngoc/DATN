@@ -1,11 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCart, updateCartItem, removeFromCart } from "../services/client/cart";
 import { toast } from "react-toastify";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const CartPage = () => {
     const queryClient = useQueryClient();
-    
+    const navigate = useNavigate();
+    const [selectedItems, setSelectedItems] = useState([]);
+
     // Query để lấy giỏ hàng
     const { data: cartData, isLoading } = useQuery({
         queryKey: ["cart"],
@@ -54,6 +57,8 @@ const CartPage = () => {
         removeItemMutation.mutate({
             cart_item_id: cartItemId
         });
+        // Remove from selected items if it was selected
+        setSelectedItems(selectedItems.filter(item => item.cartItemId !== cartItemId));
     };
 
     // Format giá tiền
@@ -64,6 +69,53 @@ const CartPage = () => {
         }).format(price);
     };
 
+    // Handle item selection
+    const handleItemSelect = (cartItem, isChecked) => {
+        if (isChecked) {
+            setSelectedItems([...selectedItems, {
+                cartItemId: cartItem.id,
+                variationId: cartItem.variation_id,
+                quantity: cartItem.quantity
+            }]);
+        } else {
+            setSelectedItems(selectedItems.filter(item => item.cartItemId !== cartItem.id));
+        }
+    };
+
+    // Handle "Select All" functionality
+    const handleSelectAll = (isChecked) => {
+        if (isChecked) {
+            const allItems = cartData.items.map(item => ({
+                cartItemId: item.id,
+                variationId: item.variation_id,
+                quantity: item.quantity
+            }));
+            setSelectedItems(allItems);
+        } else {
+            setSelectedItems([]);
+        }
+    };
+
+    // Calculate selected items total
+    const calculateSelectedTotal = () => {
+        if (!cartData?.items?.length) return 0;
+        return cartData.items.reduce((total, item) => {
+            if (selectedItems.some(selected => selected.cartItemId === item.id)) {
+                return total + (parseFloat(item.variation.sale_price) * item.quantity);
+            }
+            return total;
+        }, 0);
+    };
+
+    // Proceed to checkout
+    const handleProceedToCheckout = () => {
+        if (selectedItems.length === 0) {
+            toast.error('Vui lòng chọn ít nhất một sản phẩm');
+            return;
+        }
+        navigate('/checkout', { state: { selectedItems } });
+    };
+
     // Loading state
     if (isLoading) {
         return (
@@ -72,14 +124,6 @@ const CartPage = () => {
             </div>
         );
     }
-
-    // Tính tổng tiền
-    const calculateTotal = () => {
-        if (!cartData?.items?.length) return 0;
-        return cartData.items.reduce((total, item) => {
-            return total + (parseFloat(item.variation.sale_price) * item.quantity);
-        }, 0);
-    };
 
     // Check if cart is empty
     const isCartEmpty = !cartData?.items?.length;
@@ -110,8 +154,31 @@ const CartPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Danh sách sản phẩm */}
                     <div className="lg:col-span-2 space-y-4">
+                        {/* Select All Checkbox */}
+                        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedItems.length === cartData.items.length}
+                                    onChange={(e) => handleSelectAll(e.target.checked)}
+                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="text-gray-700">Chọn tất cả</span>
+                            </label>
+                        </div>
+
                         {cartData.items.map((item) => (
                             <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col sm:flex-row gap-4">
+                                {/* Checkbox */}
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.some(selected => selected.cartItemId === item.id)}
+                                        onChange={(e) => handleItemSelect(item, e.target.checked)}
+                                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                    />
+                                </div>
+
                                 {/* Ảnh sản phẩm */}
                                 <Link to={`/product/detail/${item.variation.product.id}`} className="w-full sm:w-32 h-32">
                                     <img
@@ -186,8 +253,8 @@ const CartPage = () => {
                             <h2 className="text-lg font-semibold text-gray-800 mb-4">Tổng đơn hàng</h2>
                             <div className="space-y-3">
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Tạm tính</span>
-                                    <span>{formatPrice(calculateTotal())}</span>
+                                    <span>Tạm tính ({selectedItems.length} sản phẩm)</span>
+                                    <span>{formatPrice(calculateSelectedTotal())}</span>
                                 </div>
                                 <div className="flex justify-between text-gray-600">
                                     <span>Phí vận chuyển</span>
@@ -196,12 +263,17 @@ const CartPage = () => {
                                 <div className="border-t pt-3">
                                     <div className="flex justify-between items-center text-lg font-semibold">
                                         <span>Tổng cộng</span>
-                                        <span className="text-blue-600">{formatPrice(calculateTotal())}</span>
+                                        <span className="text-blue-600">{formatPrice(calculateSelectedTotal())}</span>
                                     </div>
                                 </div>
                             </div>
                             <button
-                                className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                onClick={handleProceedToCheckout}
+                                disabled={selectedItems.length === 0}
+                                className={`w-full mt-6 py-3 px-4 rounded-lg font-medium transition-colors
+                                    ${selectedItems.length === 0
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                             >
                                 Tiến hành thanh toán
                             </button>
@@ -219,4 +291,4 @@ const CartPage = () => {
     );
 };
 
-export default CartPage; 
+export default CartPage;

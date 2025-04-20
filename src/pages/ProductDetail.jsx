@@ -1,18 +1,48 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getProductById } from "../services/client/product"
-import { useParams } from "react-router-dom"
+import { addToCart } from "../services/client/cart"
+import { useParams, useNavigate } from "react-router-dom"
 import { useState } from "react";
+import { toast } from "react-toastify";
+import { token_auth } from "../auth/getToken";
 
 export const ProductDetail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     // State cho màu và size được chọn
     const [selectedColor, setSelectedColor] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [quantity, setQuantity] = useState(1);
+    const queryClient = useQueryClient();
+    
+    // Kiểm tra đăng nhập
+    const isAuthenticated = !!token_auth();
     
     const { data: product, isLoading } = useQuery({
         queryKey: ["product-detail", id],
         queryFn: async () => {
             return await getProductById(id)
+        },
+        onSuccess: (data) => {
+            // Khi data load xong, set ảnh chính làm ảnh được chọn
+            setSelectedImage(data.main_image);
+        }
+    });
+
+    // Mutation để thêm vào giỏ hàng
+    const addToCartMutation = useMutation({
+        mutationFn: addToCart,
+        onSuccess: () => {
+            // Invalidate query giỏ hàng để cập nhật lại số lượng
+            queryClient.invalidateQueries({ queryKey: ['cart'] });
+            toast.success('Đã thêm vào giỏ hàng');
+        },
+        onError: (error) => {
+            if (error.message.includes('đăng nhập')) {
+                navigate('/login');
+            }
+            toast.error(error.message);
         }
     });
 
@@ -22,8 +52,13 @@ export const ProductDetail = () => {
             <div className="container mx-auto px-4 py-8">
                 <div className="animate-pulse">
                     <div className="flex flex-col md:flex-row gap-8">
-                        <div className="w-full md:w-1/2">
-                            <div className="bg-gray-200 rounded-lg h-96"></div>
+                        <div className="w-full md:w-1/2 space-y-4">
+                            <div className="bg-gray-200 rounded-lg aspect-square"></div>
+                            <div className="flex gap-2">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="bg-gray-200 rounded-lg w-20 h-20"></div>
+                                ))}
+                            </div>
                         </div>
                         <div className="w-full md:w-1/2">
                             <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -35,6 +70,12 @@ export const ProductDetail = () => {
             </div>
         );
     }
+
+    // Tạo mảng tất cả ảnh (ảnh chính + ảnh gallery)
+    const allImages = [
+        product?.main_image,
+        ...(product?.images?.map(img => img.url) || [])
+    ];
 
     // Lấy các biến thể có sẵn
     const variations = product?.variations || [];
@@ -121,17 +162,65 @@ export const ProductDetail = () => {
         }).format(price);
     };
 
+    // Xử lý thêm vào giỏ hàng
+    const handleAddToCart = () => {
+        if (!isAuthenticated) {
+            toast.warning('Vui lòng đăng nhập để thêm vào giỏ hàng');
+            navigate('/login', { state: { from: `/product/detail/${id}` } });
+            return;
+        }
+
+        const selectedVariation = getSelectedVariation();
+        if (!selectedVariation) return;
+
+        addToCartMutation.mutate({
+            product_id: product.id,
+            variation_id: selectedVariation.id,
+            quantity: quantity
+        });
+    };
+
+    // Xử lý thay đổi số lượng
+    const handleQuantityChange = (value) => {
+        const newQuantity = quantity + value;
+        if (newQuantity >= 1) {
+            setQuantity(newQuantity);
+        }
+    };
+
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Phần ảnh sản phẩm */}
-                <div className="w-full md:w-1/2">
-                    <div className="relative aspect-square rounded-lg overflow-hidden">
+                <div className="w-full md:w-1/2 space-y-4">
+                    {/* Ảnh chính */}
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
                         <img
-                            src={`http://127.0.0.1:8000/storage/${product?.main_image}`}
+                            src={`http://127.0.0.1:8000/storage/${selectedImage || product?.main_image}`}
                             alt={product?.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                         />
+                    </div>
+
+                    {/* Gallery ảnh */}
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                        {allImages.map((image, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setSelectedImage(image)}
+                                className={`flex-shrink-0 relative rounded-lg overflow-hidden w-20 h-20 border-2 transition-all
+                                    ${selectedImage === image 
+                                        ? 'border-blue-500 shadow-md' 
+                                        : 'border-transparent hover:border-gray-300'}
+                                `}
+                            >
+                                <img
+                                    src={`http://127.0.0.1:8000/storage/${image}`}
+                                    alt={`Product view ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -224,6 +313,33 @@ export const ProductDetail = () => {
                             </div>
                         </div>
 
+                        {/* Số lượng */}
+                        <div className="pt-6 border-t">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-3">Số lượng</h2>
+                            <div className="flex items-center space-x-4">
+                                <button
+                                    onClick={() => handleQuantityChange(-1)}
+                                    disabled={quantity <= 1}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center border
+                                        ${quantity <= 1 
+                                            ? 'border-gray-200 text-gray-400 cursor-not-allowed' 
+                                            : 'border-gray-300 hover:border-gray-400 text-gray-600'}
+                                    `}
+                                >
+                                    <span className="text-xl">-</span>
+                                </button>
+                                <span className="w-16 text-center text-lg font-medium">
+                                    {quantity}
+                                </span>
+                                <button
+                                    onClick={() => handleQuantityChange(1)}
+                                    className="w-10 h-10 rounded-full flex items-center justify-center border border-gray-300 hover:border-gray-400 text-gray-600"
+                                >
+                                    <span className="text-xl">+</span>
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Giá */}
                         <div className="pt-6 border-t">
                             {getSelectedVariation() ? (
@@ -240,6 +356,12 @@ export const ProductDetail = () => {
                                             {formatPrice(getSelectedVariation().sale_price)}
                                         </span>
                                     </div>
+                                    <div className="flex items-center justify-between pt-2">
+                                        <span className="text-lg text-gray-600">Tổng tiền:</span>
+                                        <span className="text-2xl font-bold text-blue-600">
+                                            {formatPrice(getSelectedVariation().sale_price * quantity)}
+                                        </span>
+                                    </div>
                                 </div>
                             ) : (
                                 <p className="text-gray-500 italic">
@@ -252,16 +374,28 @@ export const ProductDetail = () => {
                             )}
                         </div>
 
-                        {/* Nút mua hàng */}
+                        {/* Nút thêm vào giỏ */}
                         <button
-                            disabled={!getSelectedVariation()}
+                            onClick={handleAddToCart}
+                            disabled={!getSelectedVariation() || addToCartMutation.isPending}
                             className={`w-full py-3 px-6 rounded-lg text-white font-medium transition-all
-                                ${getSelectedVariation()
-                                    ? 'bg-blue-600 hover:bg-blue-700'
-                                    : 'bg-gray-300 cursor-not-allowed'}
+                                ${!getSelectedVariation() || addToCartMutation.isPending
+                                    ? 'bg-gray-300 cursor-not-allowed'
+                                    : isAuthenticated
+                                        ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                                        : 'bg-orange-500 hover:bg-orange-600 active:bg-orange-700'}
                             `}
                         >
-                            {getSelectedVariation() ? 'Thêm vào giỏ hàng' : 'Vui lòng chọn biến thể'}
+                            {addToCartMutation.isPending ? (
+                                <div className="flex items-center justify-center">
+                                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                                    Đang thêm...
+                                </div>
+                            ) : !isAuthenticated 
+                                ? 'Đăng nhập để mua hàng'
+                                : !getSelectedVariation()
+                                    ? 'Vui lòng chọn biến thể'
+                                    : 'Thêm vào giỏ hàng'}
                         </button>
                     </div>
                 </div>
