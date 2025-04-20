@@ -1,4 +1,4 @@
-import { useLocation, Navigate, data } from 'react-router-dom';
+import { useLocation, Navigate, data, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { profile } from '../services/client/user';
@@ -11,7 +11,7 @@ const CheckoutPage = () => {
     //lấy ra thằng state variant
     const selectedItems = location.state?.selectedItems;
     const [cartData, setCartData] = useState([]);
-
+    const nav = useNavigate()
     const getCart = useMutation({
         mutationFn: async () => {
             const newData = selectedItems?.map((item) => {
@@ -32,7 +32,9 @@ const CheckoutPage = () => {
             return await checkout(data);
         },
         onSuccess: (data) => {
-            console.log(data)
+            if (data?.payment_url) {
+                window.open(data.payment_url)
+            }
         },
         onError: (error) => {
             toast.error(error.message);
@@ -156,7 +158,7 @@ const CheckoutPage = () => {
                 console.log('Redirect to VNPay');
             } else {
                 // Show success message for COD
-                toast.success('Đặt hàng thành công!');
+                nav('thanks')
             }
         } catch (error) {
             toast.error('Đã có lỗi xảy ra. Vui lòng thử lại!');
@@ -278,7 +280,7 @@ const CheckoutPage = () => {
                                         type="radio"
                                         name="payment_method"
                                         value="cod"
-                                        checked={formData.payment_method === 'ship_cod'}
+                                        checked={formData.payment_method === 'cod'}
                                         onChange={handleInputChange}
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                     />
