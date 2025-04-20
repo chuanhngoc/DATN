@@ -13,7 +13,7 @@ export const getProducts = async (params) => {
 // Service để lấy chi tiết một sản phẩm
 export const getProductById = async (id) => {
     try {
-        const response = await instanceLocal.get(`/products/${id}`);
+        const response = await instanceLocal.get(`/product-detail/${id}`);
         return response.data;
     } catch (error) {
         throw new Error('Không thể lấy thông tin sản phẩm');
