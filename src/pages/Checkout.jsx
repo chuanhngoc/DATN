@@ -4,26 +4,41 @@ import { toast } from 'react-toastify';
 import { profile } from '../services/client/user';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getCheckoutData } from '../services/client/cart';
+import { checkout } from '../services/client/checkout';
 
 const CheckoutPage = () => {
     const location = useLocation();
     //lấy ra thằng state variant
     const selectedItems = location.state?.selectedItems;
-    const [data, setData] = useState([]);
+    const [cartData, setCartData] = useState([]);
+
     const getCart = useMutation({
         mutationFn: async () => {
             const newData = selectedItems?.map((item) => {
                 return item.cartItemId
             })
-            await getCheckoutData({
-                ids:newData
-            })
+            const response = await getCheckoutData({
+                ids: newData
+            });
+            return response;
         },
         onSuccess: (data) => {
-            setData(data)
+            setCartData(data);
         },
-
     });
+
+    const checkoutCart = useMutation({
+        mutationFn: async (data) => {
+            return await checkout(data);
+        },
+        onSuccess: (data) => {
+            console.log(data)
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        }
+    });
+
     const { data: userInfo, isLoading: isLoadingUser } = useQuery({
         queryKey: ["profile"],
         queryFn: async () => {
@@ -58,6 +73,30 @@ const CheckoutPage = () => {
     }, [userInfo, selectedItems]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Format giá tiền
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(price);
+    };
+
+    // Tính tổng tiền hàng
+    const calculateSubtotal = () => {
+        if (!cartData?.items?.length) return 0;
+        return cartData.items.reduce((total, item) => {
+            return total + (parseFloat(item.variation.sale_price) * item.quantity);
+        }, 0);
+    };
+
+    // Phí vận chuyển cố định
+    const shippingFee = 30000;
+
+    // Tính tổng cộng
+    const calculateTotal = () => {
+        return calculateSubtotal() + shippingFee;
+    };
 
     // Redirect if no items were selected
     if (!selectedItems || selectedItems.length === 0) {
@@ -113,6 +152,7 @@ const CheckoutPage = () => {
             // If payment method is VNPay, redirect to VNPay
             if (formData.payment_method === 'vnpay') {
                 // TODO: Redirect to VNPay payment page
+                checkoutCart.mutate(orderData)
                 console.log('Redirect to VNPay');
             } else {
                 // Show success message for COD
@@ -126,7 +166,7 @@ const CheckoutPage = () => {
     };
 
     // Show loading spinner while fetching user data
-    if (isLoadingUser) {
+    if (isLoadingUser || getCart.isPending) {
         return (
             <div className="flex justify-center items-center min-h-[400px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -238,7 +278,7 @@ const CheckoutPage = () => {
                                         type="radio"
                                         name="payment_method"
                                         value="cod"
-                                        checked={formData.payment_method === 'cod'}
+                                        checked={formData.payment_method === 'ship_cod'}
                                         onChange={handleInputChange}
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                     />
@@ -291,19 +331,52 @@ const CheckoutPage = () => {
                 {/* Order summary */}
                 <div className="bg-white rounded-lg shadow-sm p-6 h-fit">
                     <h2 className="text-lg font-semibold mb-4">Thông tin đơn hàng</h2>
+
+                    {/* Danh sách sản phẩm */}
+                    <div className="space-y-4 mb-6">
+                        {cartData?.items?.map((item) => (
+                            <div key={item.id} className="flex gap-4 py-4 border-b">
+                                <img
+                                    src={`http://127.0.0.1:8000/storage/${item.variation.product.main_image}`}
+                                    alt={item.variation.product.name}
+                                    className="w-20 h-20 object-cover rounded"
+                                />
+                                <div className="flex-1">
+                                    <h3 className="font-medium text-gray-800">
+                                        {item.variation.product.name}
+                                    </h3>
+                                    <div className="text-sm text-gray-500 mt-1">
+                                        <span>Màu: {item.variation.color.name}</span>
+                                        <span className="mx-2">|</span>
+                                        <span>Size: {item.variation.size.name}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-2">
+                                        <span className="text-blue-600 font-medium">
+                                            {formatPrice(item.variation.sale_price)}
+                                        </span>
+                                        <span className="text-gray-500">
+                                            x{item.quantity}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Tổng tiền */}
                     <div className="space-y-4">
                         <div className="flex justify-between text-sm text-gray-600">
-                            <span>Số lượng sản phẩm:</span>
-                            <span>{selectedItems.length}</span>
+                            <span>Tạm tính:</span>
+                            <span>{formatPrice(calculateSubtotal())}</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>Phí vận chuyển:</span>
-                            <span>30.000đ</span>
+                            <span>{formatPrice(shippingFee)}</span>
                         </div>
                         <div className="pt-4 border-t">
                             <div className="flex justify-between items-center text-lg font-semibold">
                                 <span>Tổng cộng:</span>
-                                <span className="text-blue-600">Đang tính...</span>
+                                <span className="text-blue-600">{formatPrice(calculateTotal())}</span>
                             </div>
                             <p className="text-sm text-gray-500 mt-2">
                                 (Đã bao gồm VAT nếu có)
