@@ -24,6 +24,8 @@ import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
 import ProductImage from './pages/admin/products/ProductImage';
 import ProductVariant from './pages/admin/products/ProductVariant';
+import { ProductDetail } from './pages/ProductDetail';
+import CartPage from './pages/Cart';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -48,7 +50,15 @@ const router = createBrowserRouter([
       {
         path: 'register',
         element: <Register />
-      }
+      },
+      {
+        path: 'product/detail/:id',
+        element: <ProductDetail />
+      },
+      {
+        path: 'cart',
+        element: <CartPage />
+      },
     ]
   },
   {
