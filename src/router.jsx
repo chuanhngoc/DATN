@@ -26,6 +26,7 @@ import ProductImage from './pages/admin/products/ProductImage';
 import ProductVariant from './pages/admin/products/ProductVariant';
 import { ProductDetail } from './pages/ProductDetail';
 import CartPage from './pages/Cart';
+import ThanksPage from './pages/Thanks';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: 'cart',
         element: <CartPage />
+      },
+      {
+        path: 'thank',
+        element: <ThanksPage />
       },
     ]
   },
