@@ -29,7 +29,7 @@ const AddProduct = () => {
 
   // State quản lý biến thể sản phẩm
   const [variations, setVariations] = useState([
-    { color_id: '', size_id: '', price: '', sale_price: '' }
+    { color_id: '', size_id: '', price: '', sale_price: '', stock_quantity: '' }
   ]);
   // Query lấy danh sách danh mục
   const { data: categories = [] } = useQuery({
@@ -73,6 +73,7 @@ const AddProduct = () => {
         formDataWithImages.append(`variations[${index}][color_id]`, variation.color_id);
         formDataWithImages.append(`variations[${index}][size_id]`, variation.size_id);
         formDataWithImages.append(`variations[${index}][price]`, variation.price);
+        formDataWithImages.append(`variations[${index}][stock_quantity]`, variation.stock_quantity);
         if (variation.sale_price) {
           formDataWithImages.append(`variations[${index}][sale_price]`, variation.sale_price);
         }
@@ -382,6 +383,21 @@ const AddProduct = () => {
                             required
                             min="0"
                             placeholder="Nhập giá"
+                          />
+                        </div>
+                        {/* Số lượng */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Số lượng <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={variation.quantity}
+                            onChange={(e) => handleVariationChange(index, 'stock_quantity', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required
+                            min="0"
+                            placeholder="Nhập số lượng"
                           />
                         </div>
 

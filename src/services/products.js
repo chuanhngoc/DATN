@@ -97,7 +97,7 @@ const getProductImages = async (id) => {
 
 const deleteProductImage = async (id) => {
     try {
-        const response = await instance.delete(`/products/${id}/images`); // DELETE request xoá ảnh
+        const response = await instance.delete(`/products/image/${id}`); // DELETE request xoá ảnh
         return response.data; // Trả về dữ liệu phản hồi sau khi xoá ảnh
     } catch (error) {
         console.error('Error deleting image:', error);
@@ -121,7 +121,9 @@ const uploadProductImages = async (id, data) => {
 
 const createProductVariant = async (id, data) => {
     try {
-        const response = await instance.post(`/products/${id}/images`, data); //thêm biến thể
+        const response = await instance.post(`/products/variation`, {
+            ...data, product_id: id
+        }); //thêm biến thể
         return response.data;
     } catch (error) {
         console.error('Error deleting image:', error);
@@ -131,7 +133,7 @@ const createProductVariant = async (id, data) => {
 
 const updateProductVariant = async (id, data) => {
     try {
-        const response = await instance.put(`/products/${id}/images`, data); //thêm biến thể
+        const response = await instance.put(`/products/variation/${id}`, data); //sửa biến thể
         return response.data;
     } catch (error) {
         console.error('Error deleting image:', error);
@@ -139,6 +141,25 @@ const updateProductVariant = async (id, data) => {
     }
 };
 
+const getProductVariants = async (id) => {
+    try {
+        const response = await instance.get(`/products/${id}/variants`); //thêm biến thể
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
+
+const deleteProductVariant = async (id) => {
+    try {
+        const response = await instance.delete(`/products/variation/${id}`); //delete biến thể
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        throw error;
+    }
+};
 export default {
     getAllProducts,
     createProduct,
@@ -151,5 +172,7 @@ export default {
     uploadProductImages,
     deleteProductImage,
     createProductVariant,
-    updateProductVariant
+    updateProductVariant,
+    getProductVariants,
+    deleteProductVariant
 };

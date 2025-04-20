@@ -19,7 +19,8 @@ const ProductVariant = () => {
         color_id: '',
         size_id: '',
         price: '',
-        sale_price: ''
+        sale_price: '',
+        stock_quantity: ''
     });
 
     // Queries
@@ -83,7 +84,8 @@ const ProductVariant = () => {
         const data = {
             ...formData,
             price: Number(formData.price),
-            sale_price: formData.sale_price ? Number(formData.sale_price) : null
+            sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+            stock_quantity: Number(formData.stock_quantity),
         };
 
         if (editingVariant) {
@@ -99,7 +101,8 @@ const ProductVariant = () => {
             color_id: variant.color_id.toString(),
             size_id: variant.size_id.toString(),
             price: variant.price.toString(),
-            sale_price: variant.sale_price ? variant.sale_price.toString() : ''
+            sale_price: variant.sale_price ? variant.sale_price.toString() : '',
+            stock_quantity: variant.stock_quantity.toString(),
         });
         setIsModalOpen(true);
     };
@@ -156,10 +159,13 @@ const ProductVariant = () => {
                                     Kích thước
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Giá
+                                    Giá khuyến mãi
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Giá khuyến mãi
+                                    Giá 
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Số lượng
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Thao tác
@@ -175,6 +181,7 @@ const ProductVariant = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {variant.size.name}
                                     </td>
+                               
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.price)}
                                     </td>
@@ -182,6 +189,9 @@ const ProductVariant = () => {
                                         {variant.sale_price
                                             ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.sale_price)
                                             : '-'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {variant.stock_quantity}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-2">
@@ -213,8 +223,8 @@ const ProductVariant = () => {
                                 key={pageNumber}
                                 onClick={() => setPage(pageNumber)}
                                 className={`px-4 py-2 text-sm rounded-lg ${pageNumber === page
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {pageNumber}
@@ -226,7 +236,7 @@ const ProductVariant = () => {
 
             {/* Modal thêm/sửa biến thể */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-opacity-50 bg-[#00000033] flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold">
@@ -250,6 +260,7 @@ const ProductVariant = () => {
                                     Màu sắc <span className="text-red-500">*</span>
                                 </label>
                                 <select
+                                    disabled={editingVariant}
                                     value={formData.color_id}
                                     onChange={(e) => setFormData({ ...formData, color_id: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -269,6 +280,7 @@ const ProductVariant = () => {
                                     Kích thước <span className="text-red-500">*</span>
                                 </label>
                                 <select
+                                    disabled={editingVariant}
                                     value={formData.size_id}
                                     onChange={(e) => setFormData({ ...formData, size_id: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -291,6 +303,20 @@ const ProductVariant = () => {
                                     type="number"
                                     value={formData.price}
                                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                    min="0"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Số lượng <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.stock_quantity}
+                                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     required
                                     min="0"
