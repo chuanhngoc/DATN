@@ -32,8 +32,10 @@ const CheckoutPage = () => {
             return await checkout(data);
         },
         onSuccess: (data) => {
-            if (data?.payment_url) {
+            if (data?.payment_url !== null) {
                 window.open(data.payment_url)
+            } else {
+                nav('/checkout/thanks')
             }
         },
         onError: (error) => {
@@ -151,15 +153,8 @@ const CheckoutPage = () => {
             // TODO: Call your API to create order
             console.log('Order Data:', orderData);
 
-            // If payment method is VNPay, redirect to VNPay
-            if (formData.payment_method === 'vnpay') {
-                // TODO: Redirect to VNPay payment page
-                checkoutCart.mutate(orderData)
-                console.log('Redirect to VNPay');
-            } else {
-                // Show success message for COD
-                nav('thanks')
-            }
+            checkoutCart.mutate(orderData)
+
         } catch (error) {
             toast.error('Đã có lỗi xảy ra. Vui lòng thử lại!');
         } finally {

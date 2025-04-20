@@ -27,6 +27,7 @@ import ProductVariant from './pages/admin/products/ProductVariant';
 import { ProductDetail } from './pages/ProductDetail';
 import CartPage from './pages/Cart';
 import ThanksPage from './pages/Thanks';
+import CheckoutPage from './pages/Checkout';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -61,7 +62,11 @@ const router = createBrowserRouter([
         element: <CartPage />
       },
       {
-        path: 'thank',
+        path: 'checkout',
+        element: <CheckoutPage />
+      },
+      {
+        path: 'checkout/thanks',
         element: <ThanksPage />
       },
     ]
