@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 
 const CartPage = () => {
     const queryClient = useQueryClient();
-
+    
     // Query để lấy giỏ hàng
-    const { data: cart, isLoading } = useQuery({
+    const { data: cartData, isLoading } = useQuery({
         queryKey: ["cart"],
         queryFn: async () => {
             return await getCart()
@@ -19,6 +19,7 @@ const CartPage = () => {
         mutationFn: updateCartItem,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['cart'] });
+            toast.success('Đã cập nhật số lượng');
         },
         onError: (error) => {
             toast.error(error.message);
@@ -66,35 +67,28 @@ const CartPage = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="animate-pulse space-y-4">
-                    {[1, 2, 3].map((item) => (
-                        <div key={item} className="bg-white rounded-lg p-4 flex gap-4">
-                            <div className="w-24 h-24 bg-gray-200 rounded"></div>
-                            <div className="flex-1 space-y-2">
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <div className="flex justify-center items-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
         );
     }
 
     // Tính tổng tiền
     const calculateTotal = () => {
-        if (!cart?.items?.length) return 0;
-        return cart.items.reduce((total, item) => {
-            return total + (item.variation.sale_price * item.quantity);
+        if (!cartData?.items?.length) return 0;
+        return cartData.items.reduce((total, item) => {
+            return total + (parseFloat(item.variation.sale_price) * item.quantity);
         }, 0);
     };
+
+    // Check if cart is empty
+    const isCartEmpty = !cartData?.items?.length;
 
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold text-gray-800 mb-8">Giỏ hàng của bạn</h1>
 
-            {!cart?.items?.length ? (
+            {isCartEmpty ? (
                 // Empty cart state
                 <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4">
@@ -116,13 +110,13 @@ const CartPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Danh sách sản phẩm */}
                     <div className="lg:col-span-2 space-y-4">
-                        {cart.items.map((item) => (
+                        {cartData.items.map((item) => (
                             <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col sm:flex-row gap-4">
                                 {/* Ảnh sản phẩm */}
-                                <Link to={`/product/detail/${item.product.id}`} className="w-full sm:w-32 h-32">
+                                <Link to={`/product/detail/${item.variation.product.id}`} className="w-full sm:w-32 h-32">
                                     <img
-                                        src={`http://127.0.0.1:8000/storage/${item.product.main_image}`}
-                                        alt={item.product.name}
+                                        src={`http://127.0.0.1:8000/storage/${item.variation.product.main_image}`}
+                                        alt={item.variation.product.name}
                                         className="w-full h-full object-cover rounded-md"
                                     />
                                 </Link>
@@ -131,10 +125,10 @@ const CartPage = () => {
                                 <div className="flex-1 flex flex-col">
                                     <div className="flex-1">
                                         <Link 
-                                            to={`/product/detail/${item.product.id}`}
+                                            to={`/product/detail/${item.variation.product.id}`}
                                             className="text-lg font-medium text-gray-800 hover:text-blue-600"
                                         >
-                                            {item.product.name}
+                                            {item.variation.product.name}
                                         </Link>
                                         <div className="mt-1 text-sm text-gray-500">
                                             <span>Màu: {item.variation.color.name}</span>
@@ -163,8 +157,12 @@ const CartPage = () => {
                                             <span className="w-12 text-center">{item.quantity}</span>
                                             <button
                                                 onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                                                disabled={updateQuantityMutation.isPending}
-                                                className="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:border-gray-400 text-gray-600"
+                                                disabled={updateQuantityMutation.isPending || item.quantity >= item.variation.stock_quantity}
+                                                className={`w-8 h-8 rounded flex items-center justify-center border
+                                                    ${item.quantity >= item.variation.stock_quantity
+                                                        ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                                        : 'border-gray-300 hover:border-gray-400 text-gray-600'}
+                                                `}
                                             >
                                                 +
                                             </button>
@@ -221,4 +219,4 @@ const CartPage = () => {
     );
 };
 
-export default CartPage;
+export default CartPage; 
