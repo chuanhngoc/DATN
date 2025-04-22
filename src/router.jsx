@@ -28,6 +28,8 @@ import { ProductDetail } from './pages/ProductDetail';
 import CartPage from './pages/Cart';
 import ThanksPage from './pages/Thanks';
 import CheckoutPage from './pages/Checkout';
+import OrderPage from './pages/Order';
+import PaymentResult from './pages/PaymentResult';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -68,6 +70,18 @@ const router = createBrowserRouter([
       {
         path: 'checkout/thanks',
         element: <ThanksPage />
+      },
+      {
+        path: 'orders',
+        element: <OrderPage />
+      },
+      {
+        path: 'orders/detail/:id',
+        element: <OrderPage />
+      },
+      {
+        path: 'thanks',
+        element: <PaymentResult />
       },
     ]
   },
