@@ -165,3 +165,14 @@ export const getAdminOrders = async () => {
         throw error.response?.data?.message || 'Có lỗi xảy ra';
     }
 };
+
+export const getOrderStatus = async () => {
+    try {
+        const response = await instance.get(`/orders/status`, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
