@@ -140,3 +140,15 @@ export const markRefundAsRefunded = async (refundId, refundProofImage) => {
 export const paymentReusult = async (queryString) => {
     return instanceLocal.get(`/vnpay/return?${queryString}`);
 };
+
+// Retry payment for an order
+export const retryPayment = async (orderId) => {
+    try {
+        const response = await instanceLocal.post(`/orders/${orderId}/retry-payment`, null, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};

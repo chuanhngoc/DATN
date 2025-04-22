@@ -1,11 +1,12 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getOrderDetail, cancelOrder } from '../services/order';
+import { getOrderDetail, cancelOrder, retryPayment } from '../services/order';
 import { toast } from 'react-toastify';
 import { useState } from 'react';
 
 const OrderDetail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
@@ -33,6 +34,22 @@ const OrderDetail = () => {
         }
     });
 
+    // Retry payment mutation
+    const retryPaymentMutation = useMutation({
+        mutationFn: () => retryPayment(id),
+        onSuccess: (data) => {
+            // Redirect to VNPay payment URL if provided in response
+            if (data?.payment_url) {
+                window.location.href = data.payment_url;
+            } else {
+                toast.error('Không thể tạo liên kết thanh toán');
+            }
+        },
+        onError: (error) => {
+            toast.error(error.message || 'Không thể thực hiện thanh toán lại');
+        }
+    });
+
     const handleCancelOrder = async (e) => {
         e.preventDefault();
         if (!cancelReason.trim()) {
@@ -42,12 +59,18 @@ const OrderDetail = () => {
         await cancelOrderMutation.mutate({ cancel_reason: cancelReason });
     };
 
+    // Handle retry payment
+    const handleRetryPayment = async () => {
+        await retryPaymentMutation.mutate();
+    };
+
     const formatPrice = (price) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND'
         }).format(price);
     };
+
 
     // Loading state
     if (isLoading) {
@@ -154,19 +177,37 @@ const OrderDetail = () => {
                             <div>
                                 <h3 className="font-medium">Phương thức thanh toán</h3>
                                 <p className="text-gray-600 mt-1">
-                                    {orderDetail?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán online'}
+                                    {orderDetail?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán VNPay'}
                                 </p>
                             </div>
-                            {(orderDetail?.status?.id === 1 || orderDetail?.status?.id === 2) && (
-                                <button
-                                    onClick={() => setShowCancelModal(true)}
-                                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
-                                >
-                                    Hủy đơn hàng
-                                </button>
-                            )}
+                            <div className="flex gap-3">
+                                {/* Retry Payment Button */}
+                                {orderDetail?.payment_method === 'vnpay' && 
+                                 orderDetail?.payment_status?.id === 1 && (
+                                    <button
+                                        onClick={handleRetryPayment}
+                                        disabled={retryPaymentMutation.isPending}
+                                        className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200
+                                            ${retryPaymentMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        {retryPaymentMutation.isPending ? 'Đang xử lý...' : 'Thanh toán lại'}
+                                    </button>
+                                )}
+                                
+                                {/* Cancel Button */}
+                                {(orderDetail?.status?.id === 1 || orderDetail?.status?.id === 2) && (
+                                    <button
+                                        onClick={() => setShowCancelModal(true)}
+                                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
+                                    >
+                                        Hủy đơn hàng
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    
 
                     {/* Order History */}
                     {orderDetail?.histories && orderDetail.histories.length > 0 && (
