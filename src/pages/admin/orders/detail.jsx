@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Truck, Package, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Truck, Package, DollarSign, Clock, CheckCircle, XCircle, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getOrderDetail, changeOrderStatus, getOrderStatus, getOrderDetailAdmin, approveRefund, rejectRefund } from '../../../services/order';
-import { useState } from 'react';
+import { changeOrderStatus, getOrderStatus, getOrderDetailAdmin, approveRefund, rejectRefund, markRefundAsRefunded } from '../../../services/order';
+import { useRef, useState } from 'react';
 
 const OrderDetailAdmin = () => {
 	const { id } = useParams();
@@ -15,6 +15,10 @@ const OrderDetailAdmin = () => {
 	const [newStatusId, setNewStatusId] = useState('');
 	const [cancelReason, setCancelReason] = useState('');
 	const [rejectReason, setRejectReason] = useState('');
+	const [refundProofImage, setRefundProofImage] = useState(null);
+	const [previewImage, setPreviewImage] = useState('');
+	const [showRefundedModal, setShowRefundedModal] = useState(false);
+	const fileInputRef = useRef(null);
 	// Fetch order details
 	const { data: order, isLoading, error } = useQuery({
 		queryKey: ['admin-order', id],
@@ -42,6 +46,19 @@ const OrderDetailAdmin = () => {
 			toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
 		}
 	});
+
+	const markRefundedMutation = useMutation({
+		mutationFn: () => markRefundAsRefunded(order?.refund?.id, refundProofImage),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['admin-order', id]);
+			toast.success('Đã cập nhật trạng thái hoàn tiền thành công');
+			handleCloseModal();
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái hoàn tiền');
+		}
+	});
+
 
 	// Approve refund mutation
 	const approveRefundMutation = useMutation({
@@ -132,6 +149,9 @@ const OrderDetailAdmin = () => {
 		setNewStatusId('');
 		setCancelReason('');
 		setRejectReason('');
+		setRefundProofImage(null);
+		setShowRefundedModal(false);
+		setPreviewImage('');
 	};
 
 	// Handle status change
@@ -192,6 +212,31 @@ const OrderDetailAdmin = () => {
 	//     }
 	// };
 
+	const handleOpenRefundedModal = () => {
+		setShowRefundedModal(true);
+	};
+
+	const handleFileChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			setRefundProofImage(file);
+			const reader = new FileReader();
+			reader.onloadend = () => {
+				setPreviewImage(reader.result);
+			};
+			reader.readAsDataURL(file);
+		}
+	};
+
+	const handleMarkRefunded = (e) => {
+		e.preventDefault();
+		if (!refundProofImage) {
+			toast.error('Vui lòng chọn ảnh chứng minh hoàn tiền');
+			return;
+		}
+		markRefundedMutation.mutate();
+	};
+
 	if (isLoading) {
 		return (
 			<div className="p-6">
@@ -250,6 +295,15 @@ const OrderDetailAdmin = () => {
 							</button>
 						</>
 					)}
+
+					<button
+						onClick={handleOpenRefundedModal}
+						className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors duration-200"
+					>
+						<Upload size={20} />
+						Hoàn tất hoàn tiền
+					</button>
+
 				</div>
 			</div>
 
@@ -527,6 +581,63 @@ const OrderDetailAdmin = () => {
 									className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
 								>
 									{rejectRefundMutation.isPending ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{showRefundedModal && (
+				<div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<h2 className="text-xl font-semibold mb-4">Hoàn tất hoàn tiền</h2>
+						<form onSubmit={handleMarkRefunded}>
+							<div className="mb-6">
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Ảnh chứng minh hoàn tiền <span className="text-red-500">*</span>
+								</label>
+								<div className="mt-2 flex flex-col items-center">
+									<div
+										onClick={() => fileInputRef.current?.click()}
+										className="w-full h-40 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors duration-200"
+									>
+										{previewImage ? (
+											<img
+												src={previewImage}
+												alt="Preview"
+												className="h-full w-full object-contain"
+											/>
+										) : (
+											<>
+												<Upload size={24} className="text-gray-400" />
+												<p className="mt-2 text-sm text-gray-500">Click để chọn ảnh</p>
+											</>
+										)}
+									</div>
+									<input
+										type="file"
+										ref={fileInputRef}
+										onChange={handleFileChange}
+										accept="image/*"
+										className="hidden"
+									/>
+								</div>
+							</div>
+							<div className="flex justify-end gap-3">
+								<button
+									type="button"
+									onClick={handleCloseModal}
+									className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+								>
+									Đóng
+								</button>
+								<button
+									type="submit"
+									disabled={markRefundedMutation.isPending || !refundProofImage}
+									className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+								>
+									{markRefundedMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hoàn tất'}
 								</button>
 							</div>
 						</form>
