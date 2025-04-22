@@ -31,6 +31,7 @@ import CheckoutPage from './pages/Checkout';
 import OrderPage from './pages/Order';
 import PaymentResult from './pages/PaymentResult';
 import OrderDetail from './pages/OrderDetail';
+import Orders from './pages/admin/Orders';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -176,7 +177,11 @@ const router = createBrowserRouter([
           {
             path: 'users/edit/:id',
             element: <EditUser />
-          }
+          },
+          {
+            path: 'orders',
+            element: <Orders />
+          },
         ]
       },
 

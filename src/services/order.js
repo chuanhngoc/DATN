@@ -1,5 +1,5 @@
 import { token_auth } from "../auth/getToken";
-import { instanceLocal } from "./instance";
+import instance, { instanceLocal } from "./instance";
 
 // Get orders with optional status filter
 const getAuthHeaders = () => {
@@ -145,6 +145,19 @@ export const paymentReusult = async (queryString) => {
 export const retryPayment = async (orderId) => {
     try {
         const response = await instanceLocal.post(`/orders/${orderId}/retry-payment`, null, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
+
+//admin
+
+export const getAdminOrders = async () => {
+    try {
+        const response = await instance.get(`/orders`, {
             headers: getAuthHeaders(),
         });
         return response.data;

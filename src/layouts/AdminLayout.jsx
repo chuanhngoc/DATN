@@ -59,6 +59,13 @@ const AdminLayout = () => {
             <Users className="w-5 h-5 mr-2" />
             Người dùng
           </Link>
+          <Link
+            to="/admin/users"
+            className={`flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 ${isActive('/admin/orders')}`}
+          >
+            <Users className="w-5 h-5 mr-2" />
+            Đơn hàng
+          </Link>
         </nav>
       </div>
 
@@ -68,10 +75,10 @@ const AdminLayout = () => {
         <div className="bg-white shadow">
           <div className="flex justify-between items-center p-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              {location.pathname === '/admin' ? 'Dashboard' : 
-               location.pathname === '/admin/products' ? 'Quản lý sản phẩm' :
-               location.pathname === '/admin/categories' ? 'Quản lý danh mục' :
-               location.pathname === '/admin/users' ? 'Quản lý người dùng' : ''}
+              {location.pathname === '/admin' ? 'Dashboard' :
+                location.pathname === '/admin/products' ? 'Quản lý sản phẩm' :
+                  location.pathname === '/admin/categories' ? 'Quản lý danh mục' :
+                    location.pathname === '/admin/users' ? 'Quản lý người dùng' : ''}
             </h2>
             <div className="flex items-center">
               <span className="text-gray-600 mr-4">Admin</span>
