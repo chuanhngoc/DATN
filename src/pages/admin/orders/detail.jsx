@@ -1,433 +1,540 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Truck, Package, DollarSign, Clock } from 'lucide-react';
+import { ArrowLeft, Truck, Package, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getOrderDetail, changeOrderStatus, getOrderStatus, getOrderDetailAdmin } from '../../../services/order';
+import { getOrderDetail, changeOrderStatus, getOrderStatus, getOrderDetailAdmin, approveRefund, rejectRefund } from '../../../services/order';
 import { useState } from 'react';
 
 const OrderDetailAdmin = () => {
-    const { id } = useParams();
-    const queryClient = useQueryClient();
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [showCancelModal, setShowCancelModal] = useState(false);
-    const [newStatusId, setNewStatusId] = useState('');
-    const [cancelReason, setCancelReason] = useState('');
-    // Fetch order details
-    const { data: order, isLoading, error } = useQuery({
-        queryKey: ['admin-order', id],
-        queryFn: async () => {
-            const response = await getOrderDetailAdmin(id);
-            return response.data;
-        }
-    });
+	const { id } = useParams();
+	const queryClient = useQueryClient();
+	const [showStatusModal, setShowStatusModal] = useState(false);
+	const [showCancelModal, setShowCancelModal] = useState(false);
+	const [showRejectModal, setShowRejectModal] = useState(false);
+	const [newStatusId, setNewStatusId] = useState('');
+	const [cancelReason, setCancelReason] = useState('');
+	const [rejectReason, setRejectReason] = useState('');
+	// Fetch order details
+	const { data: order, isLoading, error } = useQuery({
+		queryKey: ['admin-order', id],
+		queryFn: async () => {
+			const response = await getOrderDetailAdmin(id);
+			return response.data;
+		}
+	});
 
-    const { data: orderStatus = [] } = useQuery({
-        queryKey: ['orderStatus'],
-        queryFn: async () => await getOrderStatus()
-    });
+	const { data: orderStatus = [] } = useQuery({
+		queryKey: ['orderStatus'],
+		queryFn: async () => await getOrderStatus()
+	});
 
-    // Change status mutation
-    const statusMutation = useMutation({
-        mutationFn: ({ orderId, newStatusId, cancelReason }) =>
-            changeOrderStatus(orderId, newStatusId, cancelReason),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['admin-order', id]);
-            toast.success('Cập nhật trạng thái đơn hàng thành công');
-            handleCloseModal();
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
-        }
-    });
+	// Change status mutation
+	const statusMutation = useMutation({
+		mutationFn: ({ orderId, newStatusId, cancelReason }) =>
+			changeOrderStatus(orderId, newStatusId, cancelReason),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['admin-order', id]);
+			toast.success('Cập nhật trạng thái đơn hàng thành công');
+			handleCloseModal();
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
+		}
+	});
 
-    // Format price to VND
-    const formatPrice = (price) => {
-        if (!price) return '0 ₫';
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(price);
-    };
+	// Approve refund mutation
+	const approveRefundMutation = useMutation({
+		mutationFn: () => approveRefund(order?.refund?.id),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['admin-order', id]);
+			toast.success('Đã đồng ý yêu cầu hoàn tiền');
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || 'Không thể xử lý yêu cầu hoàn tiền');
+		}
+	});
 
-    // Format date
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return 'Invalid Date';
+	// Reject refund mutation
+	const rejectRefundMutation = useMutation({
+		mutationFn: (rejectReason) => rejectRefund(order?.refund?.id, rejectReason),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['admin-order', id]);
+			toast.success('Đã từ chối yêu cầu hoàn tiền');
+			handleCloseModal();
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || 'Không thể xử lý yêu cầu hoàn tiền');
+		}
+	});
 
-            return new Intl.DateTimeFormat('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            }).format(date);
-        } catch (error) {
-            return 'Invalid Date';
-        }
-    };
+	// Format price to VND
+	const formatPrice = (price) => {
+		if (!price) return '0 ₫';
+		return new Intl.NumberFormat('vi-VN', {
+			style: 'currency',
+			currency: 'VND'
+		}).format(price);
+	};
 
-    // Get status color
-    const getStatusColor = (statusId) => {
-        switch (statusId) {
-            case 1: return 'bg-yellow-100 text-yellow-800'; // Chờ xác nhận
-            case 2: return 'bg-blue-100 text-blue-800';     // Đã xác nhận
-            case 3: return 'bg-purple-100 text-purple-800'; // Đang giao hàng
-            case 4: return 'bg-green-100 text-green-800';   // Đã giao hàng
-            case 5: return 'bg-green-100 text-green-800';   // Hoàn thành
-            case 6: return 'bg-red-100 text-red-800';       // Đã hủy
-            case 7: return 'bg-orange-100 text-orange-800'; // Yêu cầu hoàn tiền
-            case 8: return 'bg-green-100 text-green-800';   // Hoàn tiền thành công
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
+	// Format date
+	const formatDate = (dateString) => {
+		if (!dateString) return 'N/A';
+		try {
+			const date = new Date(dateString);
+			if (isNaN(date.getTime())) return 'Invalid Date';
 
-    // Handle opening status modal
-    const handleOpenStatusModal = () => {
-        setNewStatusId('');
-        setShowStatusModal(true);
-    };
+			return new Intl.DateTimeFormat('vi-VN', {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+				hour12: false
+			}).format(date);
+		} catch (error) {
+			return 'Invalid Date';
+		}
+	};
 
-    // Handle closing modal
-    const handleCloseModal = () => {
-        setShowStatusModal(false);
-        setShowCancelModal(false);
-        setNewStatusId('');
-        setCancelReason('');
-    };
+	// Get status color
+	const getStatusColor = (statusId) => {
+		switch (statusId) {
+			case 1: return 'bg-yellow-100 text-yellow-800'; // Chờ xác nhận
+			case 2: return 'bg-blue-100 text-blue-800';     // Đã xác nhận
+			case 3: return 'bg-purple-100 text-purple-800'; // Đang giao hàng
+			case 4: return 'bg-green-100 text-green-800';   // Đã giao hàng
+			case 5: return 'bg-green-100 text-green-800';   // Hoàn thành
+			case 6: return 'bg-red-100 text-red-800';       // Đã hủy
+			case 7: return 'bg-orange-100 text-orange-800'; // Yêu cầu hoàn tiền
+			case 8: return 'bg-green-100 text-green-800';   // Hoàn tiền thành công
+			default: return 'bg-gray-100 text-gray-800';
+		}
+	};
 
-    // Handle status change
-    const handleStatusChange = (e) => {
-        e.preventDefault();
-        if (!newStatusId) {
-            toast.error('Vui lòng chọn trạng thái mới');
-            return;
-        }
+	// Handle opening status modal
+	const handleOpenStatusModal = () => {
+		setNewStatusId('');
+		setShowStatusModal(true);
+	};
 
-        // If status is "Đã hủy" (6), show cancel reason modal
-        if (parseInt(newStatusId) === 6) {
-            setShowCancelModal(true);
-            setShowStatusModal(false);
-            return;
-        }
+	// Handle opening reject modal
+	const handleOpenRejectModal = () => {
+		setRejectReason('');
+		setShowRejectModal(true);
+	};
 
-        // Otherwise proceed with status change
-        statusMutation.mutate({
-            orderId: id,
-            newStatusId: parseInt(newStatusId)
-        });
-    };
+	// Handle closing modal
+	const handleCloseModal = () => {
+		setShowStatusModal(false);
+		setShowCancelModal(false);
+		setShowRejectModal(false);
+		setNewStatusId('');
+		setCancelReason('');
+		setRejectReason('');
+	};
 
-    // Handle cancel order
-    const handleCancelOrder = (e) => {
-        e.preventDefault();
-        if (!cancelReason.trim()) {
-            toast.error('Vui lòng nhập lý do hủy đơn hàng');
-            return;
-        }
+	// Handle status change
+	const handleStatusChange = (e) => {
+		e.preventDefault();
+		if (!newStatusId) {
+			toast.error('Vui lòng chọn trạng thái mới');
+			return;
+		}
 
-        statusMutation.mutate({
-            orderId: id,
-            newStatusId: 6,
-            cancelReason: cancelReason.trim()
-        });
-    };
+		// If status is "Đã hủy" (6), show cancel reason modal
+		if (parseInt(newStatusId) === 6) {
+			setShowCancelModal(true);
+			setShowStatusModal(false);
+			return;
+		}
 
-    // Get available next statuses
-    const getNextStatuses = (currentStatus) => {
-        if (!currentStatus?.next_status) return [];
-        try {
-            const nextStatusIds = JSON.parse(currentStatus.next_status);
-            return orderStatus.filter(status => nextStatusIds.includes(status.id));
-        } catch (error) {
-            return [];
-        }
-    };
+		// Otherwise proceed with status change
+		statusMutation.mutate({
+			orderId: id,
+			newStatusId: parseInt(newStatusId)
+		});
+	};
 
-    if (isLoading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-                    <div className="h-40 bg-gray-200 rounded w-full mb-4"></div>
-                    <div className="h-60 bg-gray-200 rounded w-full"></div>
-                </div>
-            </div>
-        );
-    }
+	// Handle cancel order
+	const handleCancelOrder = (e) => {
+		e.preventDefault();
+		if (!cancelReason.trim()) {
+			toast.error('Vui lòng nhập lý do hủy đơn hàng');
+			return;
+		}
 
-    if (error) {
-        return (
-            <div className="p-6">
-                <div className="text-red-500">Có lỗi xảy ra khi tải thông tin đơn hàng</div>
-            </div>
-        );
-    }
+		statusMutation.mutate({
+			orderId: id,
+			newStatusId: 6,
+			cancelReason: cancelReason.trim()
+		});
+	};
 
-    return (
-        <div className="p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                    <Link to="/admin/orders" className="text-gray-600 hover:text-gray-900">
-                        <ArrowLeft size={24} />
-                    </Link>
-                    <h1 className="text-2xl font-bold">Chi tiết đơn hàng #{order?.order_code}</h1>
-                </div>
-                <button
-                    onClick={handleOpenStatusModal}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
-                >
-                    Thay đổi trạng thái
-                </button>
-            </div>
+	// Handle reject refund
+	const handleRejectRefund = (e) => {
+		e.preventDefault();
+		if (!rejectReason.trim()) {
+			toast.error('Vui lòng nhập lý do từ chối');
+			return;
+		}
+		rejectRefundMutation.mutate(rejectReason.trim());
+	};
 
-            <div className="grid grid-cols-3 gap-6 mb-6">
-                {/* Order Info */}
-                <div className="col-span-2 bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6 border-b">
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Package className="text-gray-500" size={20} />
-                            Thông tin đơn hàng
-                        </h2>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Trạng thái đơn hàng</div>
-                                <div className="flex items-center gap-3">
-                                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order?.status?.id)}`}>
-                                        {order?.status?.name}
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Thời gian đặt hàng</div>
-                                <div className="text-sm font-medium">{order?.created_at}</div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Phương thức thanh toán</div>
-                                <div className="text-sm font-medium">
-                                    {order?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 'Thanh toán VNPay'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+	// Get available next statuses
+	// const getNextStatuses = (currentStatus) => {
+	//     if (!currentStatus?.next_status) return [];
+	//     try {
+	//         const nextStatusIds = JSON.parse(currentStatus.next_status);
+	//         return orderStatus.filter(status => nextStatusIds.includes(status.id));
+	//     } catch (error) {
+	//         return [];
+	//     }
+	// };
 
-                    {/* Order Items Section */}
-                    <div className="p-6 border-b">
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Package className="text-gray-500" size={20} />
-                            Sản phẩm đã đặt
-                        </h2>
-                        <div className="space-y-4">
-                            {order?.items?.map((item) => (
-                                <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
-                                    <div className="w-20 h-20 flex-shrink-0">
-                                        <img
-                                            src={`${import.meta.env.VITE_API_URL}/${item.image}`}
-                                            alt={item.product_name}
-                                            className="w-full h-full object-cover rounded-md"
-                                        />
-                                    </div>
-                                    <div className="flex-grow">
-                                        <h3 className="font-medium text-gray-900">{item.product_name}</h3>
-                                        <div className="mt-1 text-sm text-gray-500">
-                                            {Object.entries(item.variation || {}).map(([key, value]) => (
-                                                <div key={key}>
-                                                    {key}: <span className="font-medium">{value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-2 flex items-center justify-between">
-                                            <div className="text-sm text-gray-700">
-                                                Số lượng: <span className="font-medium">{item.quantity}</span>
-                                            </div>
-                                            <div className="text-sm font-medium text-gray-900">
-                                                {formatPrice(item.product_price)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+	if (isLoading) {
+		return (
+			<div className="p-6">
+				<div className="animate-pulse">
+					<div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+					<div className="h-40 bg-gray-200 rounded w-full mb-4"></div>
+					<div className="h-60 bg-gray-200 rounded w-full"></div>
+				</div>
+			</div>
+		);
+	}
 
-                    <div className="p-6 border-b">
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Truck className="text-gray-500" size={20} />
-                            Thông tin giao hàng
-                        </h2>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Người nhận</div>
-                                <div className="text-sm font-medium">{order?.name}</div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Số điện thoại</div>
-                                <div className="text-sm font-medium">{order?.phone}</div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Email</div>
-                                <div className="text-sm font-medium">{order?.email}</div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Địa chỉ giao hàng</div>
-                                <div className="text-sm font-medium">{order?.address}</div>
-                            </div>
-                            {order?.note && (
-                                <div>
-                                    <div className="text-sm text-gray-600 mb-1">Ghi chú</div>
-                                    <div className="text-sm font-medium">{order.note}</div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+	if (error) {
+		return (
+			<div className="p-6">
+				<div className="text-red-500">Có lỗi xảy ra khi tải thông tin đơn hàng</div>
+			</div>
+		);
+	}
 
-                    <div className="p-6">
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <DollarSign className="text-gray-500" size={20} />
-                            Chi tiết thanh toán
-                        </h2>
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Tạm tính</span>
-                                <span className="font-medium">{formatPrice(order?.amounts?.total)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Phí vận chuyển</span>
-                                <span className="font-medium">{formatPrice(order?.shipping)}</span>
-                            </div>
-                            <div className="border-t pt-3">
-                                <div className="flex justify-between">
-                                    <span className="font-medium">Tổng cộng</span>
-                                    <div className="text-right">
-                                        <div className="text-lg font-bold text-blue-600">
-                                            {formatPrice(Number(order?.amounts?.final || 0))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+	return (
+		<div className="p-6">
+			{/* Header */}
+			<div className="flex items-center justify-between mb-6">
+				<div className="flex items-center gap-4">
+					<Link to="/admin/orders" className="text-gray-600 hover:text-gray-900">
+						<ArrowLeft size={24} />
+					</Link>
+					<h1 className="text-2xl font-bold">Chi tiết đơn hàng #{order?.order_code}</h1>
+				</div>
+				<div className="flex items-center gap-3">
+					<button
+						onClick={handleOpenStatusModal}
+						className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						Thay đổi trạng thái
+					</button>
 
-                {/* Order History */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6">
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Clock className="text-gray-500" size={20} />
-                            Lịch sử đơn hàng
-                        </h2>
-                        <div className="space-y-4">
-                            {order?.histories?.map((history) => (
-                                <div key={history.id} className="flex gap-4 pb-4 border-b last:border-0">
-                                    <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
-                                    <div>
-                                        <div className="text-sm font-medium">{history.status}</div>
-                                        <div className="text-xs text-gray-500">{(history.created_at)}</div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+					{order?.refund !== null && order?.refund?.status === 'pending' && (
+						<>
+							<button
+								onClick={() => approveRefundMutation.mutate()}
+								disabled={approveRefundMutation.isPending}
+								className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<CheckCircle size={20} />
+								Đồng ý hoàn tiền
+							</button>
+							<button
+								onClick={handleOpenRejectModal}
+								disabled={rejectRefundMutation.isPending}
+								className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<XCircle size={20} />
+								Từ chối hoàn tiền
+							</button>
+						</>
+					)}
+				</div>
+			</div>
 
-            {/* Status Change Modal */}
-            {showStatusModal && (
-                <div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h2 className="text-xl font-semibold mb-4">Thay đổi trạng thái đơn hàng</h2>
-                        <form onSubmit={handleStatusChange}>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Trạng thái hiện tại
-                                </label>
-                                <div className={`px-3 py-2 inline-flex text-sm font-semibold rounded-full ${getStatusColor(order?.status?.id)}`}>
-                                    {order?.status?.name}
-                                </div>
-                            </div>
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Trạng thái mới
-                                </label>
-                                <select
-                                    value={newStatusId}
-                                    onChange={(e) => setNewStatusId(e.target.value)}
-                                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                >
-                                    <option value="">Chọn trạng thái</option>
-                                    {orderStatus.map(status => (
-                                        <option key={status.id} value={status.id}>
-                                            {status.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={handleCloseModal}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={statusMutation.isPending}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                                >
-                                    {statusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+			<div className="grid grid-cols-3 gap-6 mb-6">
+				{/* Order Info */}
+				<div className="col-span-2 bg-white rounded-lg shadow overflow-hidden">
+					<div className="p-6 border-b">
+						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+							<Package className="text-gray-500" size={20} />
+							Thông tin đơn hàng
+						</h2>
+						<div className="grid grid-cols-2 gap-6">
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Trạng thái đơn hàng</div>
+								<div className="flex items-center gap-3">
+									<span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order?.status?.id)}`}>
+										{order?.status?.name}
+									</span>
+								</div>
+							</div>
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Thời gian đặt hàng</div>
+								<div className="text-sm font-medium">{order?.created_at}</div>
+							</div>
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Phương thức thanh toán</div>
+								<div className="text-sm font-medium">
+									{order?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 'Thanh toán VNPay'}
+								</div>
+							</div>
+						</div>
+					</div>
 
-            {/* Cancel Order Modal */}
-            {showCancelModal && (
-                <div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h2 className="text-xl font-semibold mb-4">Hủy đơn hàng</h2>
-                        <form onSubmit={handleCancelOrder}>
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Lý do hủy đơn hàng <span className="text-red-500">*</span>
-                                </label>
-                                <textarea
-                                    value={cancelReason}
-                                    onChange={(e) => setCancelReason(e.target.value)}
-                                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                                    placeholder="Vui lòng nhập lý do hủy đơn hàng..."
-                                    required
-                                />
-                            </div>
-                            <div className="flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={handleCloseModal}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                                >
-                                    Đóng
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={statusMutation.isPending}
-                                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
-                                >
-                                    {statusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hủy đơn'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+					{/* Order Items Section */}
+					<div className="p-6 border-b">
+						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+							<Package className="text-gray-500" size={20} />
+							Sản phẩm đã đặt
+						</h2>
+						<div className="space-y-4">
+							{order?.items?.map((item) => (
+								<div key={item.id} className="flex gap-4 p-4 border rounded-lg">
+									<div className="w-20 h-20 flex-shrink-0">
+										<img
+											src={`${import.meta.env.VITE_API_URL}/${item.image}`}
+											alt={item.product_name}
+											className="w-full h-full object-cover rounded-md"
+										/>
+									</div>
+									<div className="flex-grow">
+										<h3 className="font-medium text-gray-900">{item.product_name}</h3>
+										<div className="mt-1 text-sm text-gray-500">
+											{Object.entries(item.variation || {}).map(([key, value]) => (
+												<div key={key}>
+													{key}: <span className="font-medium">{value}</span>
+												</div>
+											))}
+										</div>
+										<div className="mt-2 flex items-center justify-between">
+											<div className="text-sm text-gray-700">
+												Số lượng: <span className="font-medium">{item.quantity}</span>
+											</div>
+											<div className="text-sm font-medium text-gray-900">
+												{formatPrice(item.product_price)}
+											</div>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					<div className="p-6 border-b">
+						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+							<Truck className="text-gray-500" size={20} />
+							Thông tin giao hàng
+						</h2>
+						<div className="space-y-4">
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Người nhận</div>
+								<div className="text-sm font-medium">{order?.name}</div>
+							</div>
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Số điện thoại</div>
+								<div className="text-sm font-medium">{order?.phone}</div>
+							</div>
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Email</div>
+								<div className="text-sm font-medium">{order?.email}</div>
+							</div>
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Địa chỉ giao hàng</div>
+								<div className="text-sm font-medium">{order?.address}</div>
+							</div>
+							{order?.note && (
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Ghi chú</div>
+									<div className="text-sm font-medium">{order.note}</div>
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="p-6">
+						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+							<DollarSign className="text-gray-500" size={20} />
+							Chi tiết thanh toán
+						</h2>
+						<div className="space-y-3">
+							<div className="flex justify-between text-sm">
+								<span className="text-gray-600">Tạm tính</span>
+								<span className="font-medium">{formatPrice(order?.amounts?.total)}</span>
+							</div>
+							<div className="flex justify-between text-sm">
+								<span className="text-gray-600">Phí vận chuyển</span>
+								<span className="font-medium">{formatPrice(order?.shipping)}</span>
+							</div>
+							<div className="border-t pt-3">
+								<div className="flex justify-between">
+									<span className="font-medium">Tổng cộng</span>
+									<div className="text-right">
+										<div className="text-lg font-bold text-blue-600">
+											{formatPrice(Number(order?.amounts?.final || 0))}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Order History */}
+				<div className="bg-white rounded-lg shadow overflow-hidden">
+					<div className="p-6">
+						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+							<Clock className="text-gray-500" size={20} />
+							Lịch sử đơn hàng
+						</h2>
+						<div className="space-y-4">
+							{order?.histories?.map((history) => (
+								<div key={history.id} className="flex gap-4 pb-4 border-b last:border-0">
+									<div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
+									<div>
+										<div className="text-sm font-medium">{history.status}</div>
+										<div className="text-xs text-gray-500">{(history.created_at)}</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{/* Status Change Modal */}
+			{showStatusModal && (
+				<div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<h2 className="text-xl font-semibold mb-4">Thay đổi trạng thái đơn hàng</h2>
+						<form onSubmit={handleStatusChange}>
+							<div className="mb-4">
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Trạng thái hiện tại
+								</label>
+								<div className={`px-3 py-2 inline-flex text-sm font-semibold rounded-full ${getStatusColor(order?.status?.id)}`}>
+									{order?.status?.name}
+								</div>
+							</div>
+							<div className="mb-6">
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Trạng thái mới
+								</label>
+								<select
+									value={newStatusId}
+									onChange={(e) => setNewStatusId(e.target.value)}
+									className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									required
+								>
+									<option value="">Chọn trạng thái</option>
+									{orderStatus.map(status => (
+										<option key={status.id} value={status.id}>
+											{status.name}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="flex justify-end gap-3">
+								<button
+									type="button"
+									onClick={handleCloseModal}
+									className="px-4 py-2 text-gray-600 hover:text-gray-800"
+								>
+									Hủy
+								</button>
+								<button
+									type="submit"
+									disabled={statusMutation.isPending}
+									className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+								>
+									{statusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{/* Cancel Order Modal */}
+			{showCancelModal && (
+				<div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<h2 className="text-xl font-semibold mb-4">Hủy đơn hàng</h2>
+						<form onSubmit={handleCancelOrder}>
+							<div className="mb-6">
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Lý do hủy đơn hàng <span className="text-red-500">*</span>
+								</label>
+								<textarea
+									value={cancelReason}
+									onChange={(e) => setCancelReason(e.target.value)}
+									className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+									placeholder="Vui lòng nhập lý do hủy đơn hàng..."
+									required
+								/>
+							</div>
+							<div className="flex justify-end gap-3">
+								<button
+									type="button"
+									onClick={handleCloseModal}
+									className="px-4 py-2 text-gray-600 hover:text-gray-800"
+								>
+									Đóng
+								</button>
+								<button
+									type="submit"
+									disabled={statusMutation.isPending}
+									className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+								>
+									{statusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hủy đơn'}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{/* Reject Refund Modal */}
+			{showRejectModal && (
+				<div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<h2 className="text-xl font-semibold mb-4">Từ chối yêu cầu hoàn tiền</h2>
+						<form onSubmit={handleRejectRefund}>
+							<div className="mb-6">
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Lý do từ chối <span className="text-red-500">*</span>
+								</label>
+								<textarea
+									value={rejectReason}
+									onChange={(e) => setRejectReason(e.target.value)}
+									className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+									placeholder="Vui lòng nhập lý do từ chối..."
+									required
+								/>
+							</div>
+							<div className="flex justify-end gap-3">
+								<button
+									type="button"
+									onClick={handleCloseModal}
+									className="px-4 py-2 text-gray-600 hover:text-gray-800"
+								>
+									Đóng
+								</button>
+								<button
+									type="submit"
+									disabled={rejectRefundMutation.isPending}
+									className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+								>
+									{rejectRefundMutation.isPending ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+		</div>
+	);
 };
 
 export default OrderDetailAdmin;
