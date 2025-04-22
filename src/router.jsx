@@ -32,6 +32,7 @@ import OrderPage from './pages/Order';
 import PaymentResult from './pages/PaymentResult';
 import OrderDetail from './pages/OrderDetail';
 import Orders from './pages/admin/Orders';
+import OrderDetailAdmin from './pages/admin/orders/detail';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -182,6 +183,10 @@ const router = createBrowserRouter([
             path: 'orders',
             element: <Orders />
           },
+          {
+            path: 'orders/:id',
+            element: <OrderDetailAdmin />
+          }
         ]
       },
 
