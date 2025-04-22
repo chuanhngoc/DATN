@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { ArrowLeft, Truck, Package, DollarSign, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getOrderDetail, changeOrderStatus, getOrderStatus } from '../../../services/order';
+import { getOrderDetail, changeOrderStatus, getOrderStatus, getOrderDetailAdmin } from '../../../services/order';
 import { useState } from 'react';
 
 const OrderDetailAdmin = () => {
@@ -17,7 +17,7 @@ const OrderDetailAdmin = () => {
     const { data: order, isLoading, error } = useQuery({
         queryKey: ['admin-order', id],
         queryFn: async () => {
-            const response = await getOrderDetail(id);
+            const response = await getOrderDetailAdmin(id);
             return response.data;
         }
     });
@@ -293,7 +293,7 @@ const OrderDetailAdmin = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Tạm tính</span>
-                                <span className="font-medium">{formatPrice(order?.total_amount)}</span>
+                                <span className="font-medium">{formatPrice(order?.amounts?.total)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Phí vận chuyển</span>
@@ -304,7 +304,7 @@ const OrderDetailAdmin = () => {
                                     <span className="font-medium">Tổng cộng</span>
                                     <div className="text-right">
                                         <div className="text-lg font-bold text-blue-600">
-                                            {formatPrice(Number(order?.total_amount || 0) + Number(order?.shipping || 0))}
+                                            {formatPrice(Number(order?.amounts?.final || 0))}
                                         </div>
                                     </div>
                                 </div>

@@ -29,6 +29,8 @@ export const getOrderDetail = async (orderId) => {
     }
 };
 
+
+
 // Cancel order with reason
 export const cancelOrder = async (orderId, cancelReason) => {
     try {
@@ -172,6 +174,17 @@ export const getOrderStatus = async () => {
             headers: getAuthHeaders(),
         });
         return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
+
+export const getOrderDetailAdmin = async (orderId) => {
+    try {
+        const response = await instance.get(`/orders/${orderId}`, {
+            headers: getAuthHeaders(),
+        });
+        return response;
     } catch (error) {
         throw error.response?.data?.message || 'Có lỗi xảy ra';
     }
