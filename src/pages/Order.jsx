@@ -112,67 +112,80 @@ const OrderPage = () => {
             {/* Orders List */}
             <div className="space-y-4">
                 {orders?.map(order => (
-                    <div key={order.id} className="bg-white rounded-lg shadow p-6">
+                    <div key={order.id} className="bg-white rounded-lg shadow-lg p-6">
                         {/* Order Header */}
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="font-medium">Đơn hàng #{order.id}</h3>
+                                <h3 className="font-medium">Đơn hàng #{order.order_code}</h3>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Đặt ngày: {formatDate(order.created_at)}
+                                    Đặt ngày: {order.created_at}
                                 </p>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(order.status)}`}>
-                                {statusOptions.find(s => s.value === order.status)?.label || order.status}
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(order.status_id)}`}>
+                                {statusOptions.find(s => s.value === order.status_id)?.label || order.status_id}
                             </span>
                         </div>
 
-                        {/* Order Items */}
-                        <div className="border-t border-b py-4 space-y-4">
-                            {order.items.map(item => (
-                                <div key={item.id} className="flex gap-4">
-                                    <img
-                                        src={`http://127.0.0.1:8000/storage/${item.variation.product.main_image}`}
-                                        alt={item.variation.product.name}
-                                        className="w-20 h-20 object-cover rounded"
-                                    />
-                                    <div className="flex-1">
-                                        <h4 className="font-medium">{item.variation.product.name}</h4>
-                                        <div className="text-sm text-gray-500 mt-1">
-                                            Màu: {item.variation.color.name} | Size: {item.variation.size.name}
-                                        </div>
-                                        <div className="flex justify-between mt-2">
-                                            <span className="text-blue-600 font-medium">
-                                                {formatPrice(item.variation.sale_price)}
+                        {/* First Item */}
+                        <div className="py-4">
+                            <div className="flex gap-4">
+                                <img
+                                    src={`http://127.0.0.1:8000/storage/${order.first_item.image}`}
+                                    alt={order.first_item.product_name}
+                                    className="w-20 h-20 object-cover rounded"
+                                />
+                                <div className="flex-1">
+                                    <h4 className="font-medium">{order.first_item.product_name}</h4>
+                                    <div className="flex justify-between mt-2">
+                                        <span className="text-gray-500">
+                                            Số lượng: x{order.first_item.quantity}
+                                        </span>
+                                        {order.extra_items_count > 0 && (
+                                            <span className="text-blue-600">
+                                                +{order.extra_items_count} sản phẩm khác
                                             </span>
-                                            <span className="text-gray-500">x{item.quantity}</span>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
+                            </div>
                         </div>
 
                         {/* Order Footer */}
                         <div className="flex justify-between items-center mt-4">
-                            <span className="text-gray-500">{order.items.length} sản phẩm</span>
+                            <div className="flex items-center space-x-2">
+                                <span className="text-gray-500">
+                                    Thanh toán:
+                                </span>
+                                <span className="px-2 py-1 bg-gray-100 rounded text-sm">
+                                    {order.payment_method === 'cod' ? 'Tiền mặt khi nhận hàng' : 'Thanh toán online'}
+                                </span>
+                            </div>
                             <div className="text-right">
                                 <span className="text-gray-500 text-sm">Tổng tiền:</span>
                                 <div className="text-xl font-semibold text-blue-600">
-                                    {formatPrice(order.total_amount)}
+                                    {formatPrice(order.final_amount)}
                                 </div>
                             </div>
                         </div>
 
                         {/* Actions */}
-                        {order.status === 'waiting_confirm' && (
-                            <div className="mt-4 pt-4 border-t flex justify-end">
+                        <div className="mt-4 pt-4 border-t flex justify-end gap-3">
+                            <Link
+                                to={`/orders/${order.id}`}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
+                            >
+                                Chi tiết đơn hàng
+                            </Link>
+                            {order.status_id === 'waiting_confirm' && (
                                 <button
                                     onClick={() => handleCancelOrder(order.id)}
-                                    className="px-4 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50"
+                                    className="px-4 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50 transition-colors duration-200"
                                 >
                                     Hủy đơn hàng
                                 </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                        
                     </div>
                 ))}
             </div>

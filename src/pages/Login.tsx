@@ -9,7 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
 
   // Hàm xử lý khi submit form
@@ -18,34 +18,34 @@ const Login = () => {
 
     // Kiểm tra form trống
     if (!email || !password) {
-        setError('Vui lòng điền đầy đủ thông tin!');
-        return;
+      setError('Vui lòng điền đầy đủ thông tin!');
+      return;
     }
 
     // Kiểm tra độ dài mật khẩu
     if (password.length < 8) {
-        setError('Mật khẩu phải có ít nhất 8 ký tự!');
-        return;
+      setError('Mật khẩu phải có ít nhất 8 ký tự!');
+      return;
     }
 
     try {
-        setLoading(true);
-        setError('');
+      setLoading(true);
+      setError('');
 
-        // Gọi API đăng nhập
-        const res = await authService.login({ email, password });
+      // Gọi API đăng nhập
+      const res = await authService.login({ email, password });
+      location.reload();
+      // Hiển thị thông báo thành công
+      toast.success('Đăng nhập thành công!');
 
-        // Hiển thị thông báo thành công
-        toast.success('Đăng nhập thành công!');
-
-        // Chuyển hướng về trang chủ
-        navigate('/');
+      // Chuyển hướng về trang chủ
+      navigate('/');
     } catch (err: any) {
-        // Hiển thị lỗi
-        setError(err.response?.data?.message || 'Đăng nhập thất bại!');
-        toast.error(err.response?.data?.message || 'Đăng nhập thất bại!');
+      // Hiển thị lỗi
+      setError(err.response?.data?.message || 'Đăng nhập thất bại!');
+      toast.error(err.response?.data?.message || 'Đăng nhập thất bại!');
     }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

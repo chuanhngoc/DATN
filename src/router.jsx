@@ -30,6 +30,7 @@ import ThanksPage from './pages/Thanks';
 import CheckoutPage from './pages/Checkout';
 import OrderPage from './pages/Order';
 import PaymentResult from './pages/PaymentResult';
+import OrderDetail from './pages/OrderDetail';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -76,8 +77,8 @@ const router = createBrowserRouter([
         element: <OrderPage />
       },
       {
-        path: 'orders/detail/:id',
-        element: <OrderPage />
+        path: 'orders/:id',
+        element: <OrderDetail />
       },
       {
         path: 'thanks',

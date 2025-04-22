@@ -8,6 +8,7 @@ const CartPage = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [selectedItems, setSelectedItems] = useState([]);
+    const SHIPPING_FEE = 30000; // Định nghĩa phí vận chuyển cố định
 
     // Query để lấy giỏ hàng
     const { data: cartData, isLoading } = useQuery({
@@ -96,8 +97,8 @@ const CartPage = () => {
         }
     };
 
-    // Calculate selected items total
-    const calculateSelectedTotal = () => {
+    // Calculate subtotal (before shipping)
+    const calculateSubtotal = () => {
         if (!cartData?.items?.length) return 0;
         return cartData.items.reduce((total, item) => {
             if (selectedItems.some(selected => selected.cartItemId === item.id)) {
@@ -107,12 +108,19 @@ const CartPage = () => {
         }, 0);
     };
 
+    // Calculate total (including shipping)
+    const calculateTotal = () => {
+        const subtotal = calculateSubtotal();
+        return subtotal + (selectedItems.length > 0 ? SHIPPING_FEE : 0);
+    };
+
     // Proceed to checkout
     const handleProceedToCheckout = () => {
         if (selectedItems.length === 0) {
             toast.error('Vui lòng chọn ít nhất một sản phẩm');
             return;
         }
+        //lưu id thằng variant
         navigate('/checkout', { state: { selectedItems } });
     };
 
@@ -254,17 +262,22 @@ const CartPage = () => {
                             <div className="space-y-3">
                                 <div className="flex justify-between text-gray-600">
                                     <span>Tạm tính ({selectedItems.length} sản phẩm)</span>
-                                    <span>{formatPrice(calculateSelectedTotal())}</span>
+                                    <span>{formatPrice(calculateSubtotal())}</span>
                                 </div>
                                 <div className="flex justify-between text-gray-600">
                                     <span>Phí vận chuyển</span>
-                                    <span>Miễn phí</span>
+                                    <span>{selectedItems.length > 0 ? formatPrice(SHIPPING_FEE) : '---'}</span>
                                 </div>
                                 <div className="border-t pt-3">
                                     <div className="flex justify-between items-center text-lg font-semibold">
                                         <span>Tổng cộng</span>
-                                        <span className="text-blue-600">{formatPrice(calculateSelectedTotal())}</span>
+                                        <span className="text-blue-600">{formatPrice(calculateTotal())}</span>
                                     </div>
+                                    {selectedItems.length > 0 && (
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            (Đã bao gồm phí vận chuyển)
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <button
