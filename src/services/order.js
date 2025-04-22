@@ -1,3 +1,6 @@
+import { token_auth } from "../auth/getToken";
+import instance, { instanceLocal } from "./instance";
+
 // Get orders with optional status filter
 const getAuthHeaders = () => {
     const token_ = token_auth();
@@ -25,6 +28,8 @@ export const getOrderDetail = async (orderId) => {
         throw error.response?.data?.message || 'Có lỗi xảy ra';
     }
 };
+
+
 
 // Cancel order with reason
 export const cancelOrder = async (orderId, cancelReason) => {
@@ -136,4 +141,51 @@ export const markRefundAsRefunded = async (refundId, refundProofImage) => {
 
 export const paymentReusult = async (queryString) => {
     return instanceLocal.get(`/vnpay/return?${queryString}`);
+};
+
+// Retry payment for an order
+export const retryPayment = async (orderId) => {
+    try {
+        const response = await instanceLocal.post(`/orders/${orderId}/retry-payment`, null, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
+
+//admin
+
+export const getAdminOrders = async () => {
+    try {
+        const response = await instance.get(`/orders`, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
+
+export const getOrderStatus = async () => {
+    try {
+        const response = await instance.get(`/orders/status`, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
+
+export const getOrderDetailAdmin = async (orderId) => {
+    try {
+        const response = await instance.get(`/orders/${orderId}`, {
+            headers: getAuthHeaders(),
+        });
+        return response;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
 };
