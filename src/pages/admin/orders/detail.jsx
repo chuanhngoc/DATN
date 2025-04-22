@@ -10,7 +10,9 @@ const OrderDetailAdmin = () => {
     const { id } = useParams();
     const queryClient = useQueryClient();
     const [showStatusModal, setShowStatusModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
     const [newStatusId, setNewStatusId] = useState('');
+    const [cancelReason, setCancelReason] = useState('');
     // Fetch order details
     const { data: order, isLoading, error } = useQuery({
         queryKey: ['admin-order', id],
@@ -27,15 +29,15 @@ const OrderDetailAdmin = () => {
 
     // Change status mutation
     const statusMutation = useMutation({
-        mutationFn: ({ orderId, newStatusId }) =>
-            changeOrderStatus(orderId, newStatusId),
+        mutationFn: ({ orderId, newStatusId, cancelReason }) =>
+            changeOrderStatus(orderId, newStatusId, cancelReason),
         onSuccess: () => {
             queryClient.invalidateQueries(['admin-order', id]);
             toast.success('Cập nhật trạng thái đơn hàng thành công');
             handleCloseModal();
         },
         onError: (error) => {
-            toast.error(error.message || 'Không thể cập nhật trạng thái đơn hàng');
+            toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
         }
     });
 
@@ -92,7 +94,9 @@ const OrderDetailAdmin = () => {
     // Handle closing modal
     const handleCloseModal = () => {
         setShowStatusModal(false);
+        setShowCancelModal(false);
         setNewStatusId('');
+        setCancelReason('');
     };
 
     // Handle status change
@@ -102,9 +106,33 @@ const OrderDetailAdmin = () => {
             toast.error('Vui lòng chọn trạng thái mới');
             return;
         }
+
+        // If status is "Đã hủy" (6), show cancel reason modal
+        if (parseInt(newStatusId) === 6) {
+            setShowCancelModal(true);
+            setShowStatusModal(false);
+            return;
+        }
+
+        // Otherwise proceed with status change
         statusMutation.mutate({
             orderId: id,
             newStatusId: parseInt(newStatusId)
+        });
+    };
+
+    // Handle cancel order
+    const handleCancelOrder = (e) => {
+        e.preventDefault();
+        if (!cancelReason.trim()) {
+            toast.error('Vui lòng nhập lý do hủy đơn hàng');
+            return;
+        }
+
+        statusMutation.mutate({
+            orderId: id,
+            newStatusId: 6,
+            cancelReason: cancelReason.trim()
         });
     };
 
@@ -176,7 +204,7 @@ const OrderDetailAdmin = () => {
                             </div>
                             <div>
                                 <div className="text-sm text-gray-600 mb-1">Thời gian đặt hàng</div>
-                                <div className="text-sm font-medium">{formatDate(order?.created_at)}</div>
+                                <div className="text-sm font-medium">{order?.created_at}</div>
                             </div>
                             <div>
                                 <div className="text-sm text-gray-600 mb-1">Phương thức thanh toán</div>
@@ -255,7 +283,7 @@ const OrderDetailAdmin = () => {
                                     <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
                                     <div>
                                         <div className="text-sm font-medium">{history.status}</div>
-                                        <div className="text-xs text-gray-500">{formatDate(history.created_at)}</div>
+                                        <div className="text-xs text-gray-500">{(history.created_at)}</div>
                                     </div>
                                 </div>
                             ))}
@@ -266,7 +294,7 @@ const OrderDetailAdmin = () => {
 
             {/* Status Change Modal */}
             {showStatusModal && (
-                <div className="fixed inset-0 bg-[#00000080] bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                         <h2 className="text-xl font-semibold mb-4">Thay đổi trạng thái đơn hàng</h2>
                         <form onSubmit={handleStatusChange}>
@@ -310,6 +338,45 @@ const OrderDetailAdmin = () => {
                                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
                                 >
                                     {statusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Order Modal */}
+            {showCancelModal && (
+                <div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h2 className="text-xl font-semibold mb-4">Hủy đơn hàng</h2>
+                        <form onSubmit={handleCancelOrder}>
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Lý do hủy đơn hàng <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                                    placeholder="Vui lòng nhập lý do hủy đơn hàng..."
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={statusMutation.isPending}
+                                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                                >
+                                    {statusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hủy đơn'}
                                 </button>
                             </div>
                         </form>
