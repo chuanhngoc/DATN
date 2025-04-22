@@ -215,6 +215,45 @@ const OrderDetailAdmin = () => {
                         </div>
                     </div>
 
+                    {/* Order Items Section */}
+                    <div className="p-6 border-b">
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Package className="text-gray-500" size={20} />
+                            Sản phẩm đã đặt
+                        </h2>
+                        <div className="space-y-4">
+                            {order?.items?.map((item) => (
+                                <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
+                                    <div className="w-20 h-20 flex-shrink-0">
+                                        <img
+                                            src={`${import.meta.env.VITE_API_URL}/${item.image}`}
+                                            alt={item.product_name}
+                                            className="w-full h-full object-cover rounded-md"
+                                        />
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h3 className="font-medium text-gray-900">{item.product_name}</h3>
+                                        <div className="mt-1 text-sm text-gray-500">
+                                            {Object.entries(item.variation || {}).map(([key, value]) => (
+                                                <div key={key}>
+                                                    {key}: <span className="font-medium">{value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-between">
+                                            <div className="text-sm text-gray-700">
+                                                Số lượng: <span className="font-medium">{item.quantity}</span>
+                                            </div>
+                                            <div className="text-sm font-medium text-gray-900">
+                                                {formatPrice(item.product_price)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="p-6 border-b">
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Truck className="text-gray-500" size={20} />
@@ -263,7 +302,11 @@ const OrderDetailAdmin = () => {
                             <div className="border-t pt-3">
                                 <div className="flex justify-between">
                                     <span className="font-medium">Tổng cộng</span>
-                                    <span className="text-lg font-bold text-blue-600">{formatPrice(order?.final_amount)}</span>
+                                    <div className="text-right">
+                                        <div className="text-lg font-bold text-blue-600">
+                                            {formatPrice(Number(order?.total_amount || 0) + Number(order?.shipping || 0))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
