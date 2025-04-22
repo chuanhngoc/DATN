@@ -54,7 +54,9 @@ const Header = () => {
             {user ? (
               // Nếu đã đăng nhập, hiển thị tên người dùng và nút đăng xuất
               <div className="flex items-center space-x-3">
-                <span className="text-gray-600">👤 {user.name}</span>
+                <Link to={'/orders'}>
+                  <span className="text-gray-600">👤 {user.name}</span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
