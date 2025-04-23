@@ -195,16 +195,19 @@ const OrderDetail = () => {
                                 </div>
                                 <div className="flex flex-col gap-3">
                                     <span className={`px-6 py-2.5 rounded-full text-sm font-medium inline-flex items-center justify-center shadow-lg ${
-                                        orderDetail?.status?.id === 8 ? 'bg-emerald-500 text-white' :
+                                        orderDetail?.status?.id === 5 ? 'bg-emerald-500 text-white' :
                                         orderDetail?.status?.id === 6 ? 'bg-rose-500 text-white' :
+                                        orderDetail?.status?.id === 4 ? 'bg-blue-500 text-white' :
+                                        orderDetail?.status?.id === 3 ? 'bg-purple-500 text-white' :
+                                        orderDetail?.status?.id === 2 ? 'bg-amber-500 text-white' :
                                         'bg-white text-slate-800'
                                     }`}>
                                         {orderDetail?.status?.name}
                                     </span>
                                     <span className={`px-6 py-2.5 rounded-full text-sm font-medium inline-flex items-center justify-center shadow-lg ${
-                                        orderDetail?.payment_status?.id === 3 ? 'bg-emerald-500 text-white' :
-                                        orderDetail?.payment_status?.id === 2 ? 'bg-rose-500 text-white' :
-                                        'bg-white text-slate-800'
+                                        orderDetail?.payment_status?.id === 2 ? 'bg-emerald-500 text-white' :
+                                        orderDetail?.payment_status?.id === 1 ? 'bg-amber-500 text-white' :
+                                        'bg-rose-500 text-white'
                                     }`}>
                                         {orderDetail?.payment_status?.name}
                                     </span>
@@ -281,6 +284,12 @@ const OrderDetail = () => {
                                     <label className="text-sm font-medium text-slate-500">Địa chỉ</label>
                                     <p className="text-slate-800 font-medium">{orderDetail?.address}</p>
                                 </div>
+                                {orderDetail?.note && (
+                                    <div className="col-span-2 space-y-2">
+                                        <label className="text-sm font-medium text-slate-500">Ghi chú</label>
+                                        <p className="text-slate-800 font-medium">{orderDetail.note}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -347,6 +356,71 @@ const OrderDetail = () => {
                             </div>
                         </div>
 
+                        {/* Phần thanh toán và các nút tác vụ */}
+                        <div className="p-8 border-t border-slate-200">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-800 mb-2">Phương thức thanh toán</h3>
+                                    <p className="text-slate-600">
+                                        {orderDetail?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán VNPay'}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                    {/* Nút thanh toán lại - chỉ hiện khi thanh toán VNPay chưa thành công */}
+                                    {orderDetail?.payment_method === 'vnpay' &&
+                                        orderDetail?.payment_status?.id === 1 && (
+                                            <button
+                                                onClick={handleRetryPayment}
+                                                disabled={retryPaymentMutation.isPending}
+                                                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                </svg>
+                                                {retryPaymentMutation.isPending ? 'Đang xử lý...' : 'Thanh toán lại'}
+                                            </button>
+                                        )}
+
+                                    {/* Nút hủy đơn - chỉ hiện khi đơn hàng mới hoặc đã xác nhận */}
+                                    {(orderDetail?.status?.id === 1 || orderDetail?.status?.id === 2) && (
+                                        <button
+                                            onClick={() => setShowCancelModal(true)}
+                                            className="px-6 py-3 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Hủy đơn hàng
+                                        </button>
+                                    )}
+
+                                    {/* Nút hoàn tiền và hoàn thành - chỉ hiện khi đơn đã giao */}
+                                    {orderDetail?.status?.id === 4 && !orderDetail?.refund_request && (
+                                        <>
+                                            <button
+                                                onClick={() => setShowRefundModal(true)}
+                                                className="px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                                                </svg>
+                                                Yêu cầu hoàn tiền
+                                            </button>
+                                            <button
+                                                onClick={() => setShowCompleteModal(true)}
+                                                className="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Xác nhận hoàn thành
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Lịch sử đơn hàng */}
                         {orderDetail?.histories && orderDetail.histories.length > 0 && (
                             <div className="p-8 border-t border-slate-200">
@@ -365,10 +439,28 @@ const OrderDetail = () => {
                                             <div className="flex-1">
                                                 <p className="text-slate-800 font-medium">{history.status}</p>
                                                 <p className="text-sm text-slate-500">{history.created_at}</p>
+                                                {history.note && (
+                                                    <p className="text-sm text-slate-600 mt-1">{history.note}</p>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Hiển thị lý do hủy nếu đơn đã bị hủy */}
+                        {orderDetail?.cancel_reason && (
+                            <div className="p-8 border-t border-slate-200 bg-rose-50">
+                                <h3 className="text-lg font-bold text-rose-600 mb-3 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Lý do hủy đơn hàng
+                                </h3>
+                                <p className="text-slate-600 bg-white p-4 rounded-lg border border-rose-100">
+                                    {orderDetail.cancel_reason}
+                                </p>
                             </div>
                         )}
                     </div>
