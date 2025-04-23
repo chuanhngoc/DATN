@@ -61,8 +61,6 @@ export const completeOrder = async (orderId) => {
 export const requestRefund = async (orderId, data) => {
     try {
         const formData = new FormData();
-        formData.append('type', data.type);
-        formData.append('amount', data.amount);
         formData.append('reason', data.reason);
         formData.append('bank_name', data.bank_name);
         formData.append('bank_account_name', data.bank_account_name);
