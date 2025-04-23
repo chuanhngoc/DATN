@@ -73,9 +73,10 @@ export const requestRefund = async (orderId, data) => {
             });
         }
 
-        const response = await instanceLocal.post(`/orders/history/${orderId}/refund-request`, formData, {
+        const response = await instanceLocal.post(`/orders/${orderId}/refund-request`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'multipart/form-data',
+                ...getAuthHeaders()
             }
         });
         return response.data;
