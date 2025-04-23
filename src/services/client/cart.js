@@ -60,9 +60,9 @@ export const removeFromCart = async (data) => {
 };
 
 // Lấy dữ liệu checkout
-export const getCheckoutData = async () => {
+export const getCheckoutData = async (data) => {
     try {
-        const response = await instanceLocal.post('/cart/checkout-data', null, {
+        const response = await instanceLocal.post('/cart/checkout-data', data, {
             headers: getAuthHeaders()
         });
         return response.data;

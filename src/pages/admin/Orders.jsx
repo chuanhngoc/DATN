@@ -91,22 +91,7 @@ const Orders = () => {
 		<div className="p-6">
 			<div className="flex justify-between items-center mb-6">
 				<h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
-				<div className="flex items-center gap-2">
-					<Filter size={20} className="text-gray-500" />
-					<select
-						value={selectedStatus}
-						onChange={(e) => setSelectedStatus(e.target.value)}
-						className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="">Tất cả trạng thái</option>
-						<option value="1">Chờ xác nhận</option>
-						<option value="2">Đã xác nhận</option>
-						<option value="3">Đang giao hàng</option>
-						<option value="4">Đã giao hàng</option>
-						<option value="5">Hoàn thành</option>
-						<option value="6">Đã hủy</option>
-					</select>
-				</div>
+		
 			</div>
 
 			<div className="bg-white rounded-lg shadow overflow-hidden">

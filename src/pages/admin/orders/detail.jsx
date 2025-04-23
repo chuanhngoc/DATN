@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Truck, Package, DollarSign, Clock, CheckCircle, XCircle, Upload } from 'lucide-react';
+import { ArrowLeft, Truck, Package, DollarSign, Clock, CheckCircle, XCircle, Upload, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { changeOrderStatus, getOrderStatus, getOrderDetailAdmin, approveRefund, rejectRefund, markRefundAsRefunded } from '../../../services/order';
+import { changeOrderStatus, getOrderStatus, getOrderDetailAdmin, approveRefund, rejectRefund, markRefundAsRefunded, completeOrder } from '../../../services/order';
 import { useRef, useState } from 'react';
 
 const OrderDetailAdmin = () => {
@@ -12,12 +12,13 @@ const OrderDetailAdmin = () => {
 	const [showStatusModal, setShowStatusModal] = useState(false);
 	const [showCancelModal, setShowCancelModal] = useState(false);
 	const [showRejectModal, setShowRejectModal] = useState(false);
+	const [showRefundedModal, setShowRefundedModal] = useState(false);
+	const [showCompleteConfirmModal, setShowCompleteConfirmModal] = useState(false);
 	const [newStatusId, setNewStatusId] = useState('');
 	const [cancelReason, setCancelReason] = useState('');
 	const [rejectReason, setRejectReason] = useState('');
 	const [refundProofImage, setRefundProofImage] = useState(null);
 	const [previewImage, setPreviewImage] = useState('');
-	const [showRefundedModal, setShowRefundedModal] = useState(false);
 	const fileInputRef = useRef(null);
 	// Fetch order details
 	const { data: order, isLoading, error } = useQuery({
@@ -43,10 +44,24 @@ const OrderDetailAdmin = () => {
 			handleCloseModal();
 		},
 		onError: (error) => {
-			toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng');
+			toast.error(error || 'Không thể cập nhật trạng thái đơn hàng');
 		}
 	});
 
+	// Complete order mutation
+	const completeMutation = useMutation({
+		mutationFn: () => completeOrder(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['admin-order', id]);
+			toast.success('Đơn hàng đã được hoàn thành');
+			handleCloseModal();
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || 'Không thể hoàn thành đơn hàng');
+		}
+	});
+
+	// Mark refunded mutation
 	const markRefundedMutation = useMutation({
 		mutationFn: () => markRefundAsRefunded(order?.refund?.id, refundProofImage),
 		onSuccess: () => {
@@ -58,7 +73,6 @@ const OrderDetailAdmin = () => {
 			toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái hoàn tiền');
 		}
 	});
-
 
 	// Approve refund mutation
 	const approveRefundMutation = useMutation({
@@ -146,11 +160,12 @@ const OrderDetailAdmin = () => {
 		setShowStatusModal(false);
 		setShowCancelModal(false);
 		setShowRejectModal(false);
+		setShowRefundedModal(false);
+		setShowCompleteConfirmModal(false);
 		setNewStatusId('');
 		setCancelReason('');
 		setRejectReason('');
 		setRefundProofImage(null);
-		setShowRefundedModal(false);
 		setPreviewImage('');
 	};
 
@@ -219,6 +234,14 @@ const OrderDetailAdmin = () => {
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
+			if (file.size > 5 * 1024 * 1024) { // 5MB
+				toast.error('Kích thước file không được vượt quá 5MB');
+				return;
+			}
+			if (!file.type.startsWith('image/')) {
+				toast.error('Vui lòng chọn file ảnh');
+				return;
+			}
 			setRefundProofImage(file);
 			const reader = new FileReader();
 			reader.onloadend = () => {
@@ -235,6 +258,11 @@ const OrderDetailAdmin = () => {
 			return;
 		}
 		markRefundedMutation.mutate();
+	};
+
+	// Handle complete order
+	const handleCompleteOrder = () => {
+		completeMutation.mutate();
 	};
 
 	if (isLoading) {
@@ -262,7 +290,7 @@ const OrderDetailAdmin = () => {
 			{/* Header */}
 			<div className="flex items-center justify-between mb-6">
 				<div className="flex items-center gap-4">
-					<Link to="/admin/orders" className="text-gray-600 hover:text-gray-900">
+					<Link to="/admin/orders" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">
 						<ArrowLeft size={24} />
 					</Link>
 					<h1 className="text-2xl font-bold">Chi tiết đơn hàng #{order?.order_code}</h1>
@@ -270,40 +298,43 @@ const OrderDetailAdmin = () => {
 				<div className="flex items-center gap-3">
 					<button
 						onClick={handleOpenStatusModal}
-						className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+						className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
 					>
+						<Clock size={20} />
 						Thay đổi trạng thái
 					</button>
+
 
 					{order?.refund !== null && order?.refund?.status === 'pending' && (
 						<>
 							<button
 								onClick={() => approveRefundMutation.mutate()}
 								disabled={approveRefundMutation.isPending}
-								className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+								className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
 							>
 								<CheckCircle size={20} />
-								Đồng ý hoàn tiền
+								{approveRefundMutation.isPending ? 'Đang xử lý...' : 'Đồng ý hoàn tiền'}
 							</button>
 							<button
 								onClick={handleOpenRejectModal}
 								disabled={rejectRefundMutation.isPending}
-								className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+								className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
 							>
 								<XCircle size={20} />
-								Từ chối hoàn tiền
+								{rejectRefundMutation.isPending ? 'Đang xử lý...' : 'Từ chối hoàn tiền'}
 							</button>
 						</>
 					)}
 
-					<button
-						onClick={handleOpenRefundedModal}
-						className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-colors duration-200"
-					>
-						<Upload size={20} />
-						Hoàn tất hoàn tiền
-					</button>
-
+					{order?.refund !== null && order?.refund?.status === 'approved' && (
+						<button
+							onClick={handleOpenRefundedModal}
+							className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+						>
+							<Upload size={20} />
+							Hoàn tất hoàn tiền
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -317,6 +348,10 @@ const OrderDetailAdmin = () => {
 						</h2>
 						<div className="grid grid-cols-2 gap-6">
 							<div>
+								<div className="text-sm text-gray-600 mb-1">Mã đơn hàng</div>
+								<div className="text-sm font-medium">{order?.order_code}</div>
+							</div>
+							<div>
 								<div className="text-sm text-gray-600 mb-1">Trạng thái đơn hàng</div>
 								<div className="flex items-center gap-3">
 									<span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order?.status?.id)}`}>
@@ -329,10 +364,18 @@ const OrderDetailAdmin = () => {
 								<div className="text-sm font-medium">{order?.created_at}</div>
 							</div>
 							<div>
+								<div className="text-sm text-gray-600 mb-1">Thời gian cập nhật</div>
+								<div className="text-sm font-medium">{order?.updated_at}</div>
+							</div>
+							<div>
 								<div className="text-sm text-gray-600 mb-1">Phương thức thanh toán</div>
 								<div className="text-sm font-medium">
 									{order?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 'Thanh toán VNPay'}
 								</div>
+							</div>
+							<div>
+								<div className="text-sm text-gray-600 mb-1">Trạng thái thanh toán</div>
+								<div className="text-sm font-medium">{order?.payment_status?.name}</div>
 							</div>
 						</div>
 					</div>
@@ -406,6 +449,68 @@ const OrderDetailAdmin = () => {
 							)}
 						</div>
 					</div>
+
+					{/* Refund Information */}
+					{order?.refund !== null && (
+						<div className="p-6 border-b">
+							<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+								<DollarSign className="text-gray-500" size={20} />
+								Thông tin hoàn tiền
+							</h2>
+							<div className="space-y-4">
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Loại hoàn tiền</div>
+									<div className="text-sm font-medium">
+										{order.refund.type === 'return_after_received' ? 'Hoàn tiền sau khi nhận hàng' : 'Hoàn tiền trước khi nhận hàng'}
+									</div>
+								</div>
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Số tiền hoàn</div>
+									<div className="text-sm font-medium">{formatPrice(order.refund.amount)}</div>
+								</div>
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Lý do hoàn tiền</div>
+									<div className="text-sm font-medium">{order.refund.reason}</div>
+								</div>
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Trạng thái</div>
+									<div className="text-sm font-medium">{order.refund.status}</div>
+								</div>
+								{order.refund.reject_reason && (
+									<div>
+										<div className="text-sm text-gray-600 mb-1">Lý do từ chối</div>
+										<div className="text-sm font-medium">{order.refund.reject_reason}</div>
+									</div>
+								)}
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Thông tin ngân hàng</div>
+									<div className="text-sm font-medium">
+										<div>Ngân hàng: {order.refund.bank_name}</div>
+										<div>Chủ tài khoản: {order.refund.bank_account_name}</div>
+										<div>Số tài khoản: {order.refund.bank_account_number}</div>
+									</div>
+								</div>
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Thời gian phê duyệt</div>
+									<div className="text-sm font-medium">{order.refund.approved_at}</div>
+								</div>
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Thời gian hoàn tiền</div>
+									<div className="text-sm font-medium">{order.refund.refunded_at}</div>
+								</div>
+								{order.refund.refund_proof_image && (
+									<div>
+										<div className="text-sm text-gray-600 mb-1">Ảnh chứng minh hoàn tiền</div>
+										<img
+											src={`${import.meta.env.VITE_API_URL}/${order.refund.refund_proof_image}`}
+											alt="Ảnh chứng minh hoàn tiền"
+											className="w-32 h-32 object-cover rounded-md"
+										/>
+									</div>
+								)}
+							</div>
+						</div>
+					)}
 
 					<div className="p-6">
 						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -641,6 +746,33 @@ const OrderDetailAdmin = () => {
 								</button>
 							</div>
 						</form>
+					</div>
+				</div>
+			)}
+
+			{/* Complete Order Confirmation Modal */}
+			{showCompleteConfirmModal && (
+				<div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<h2 className="text-xl font-semibold mb-4">Xác nhận hoàn thành đơn hàng</h2>
+						<p className="text-gray-600 mb-6">
+							Bạn có chắc chắn muốn hoàn thành đơn hàng này? Hành động này không thể hoàn tác.
+						</p>
+						<div className="flex justify-end gap-3">
+							<button
+								onClick={handleCloseModal}
+								className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+							>
+								Hủy
+							</button>
+							<button
+								onClick={handleCompleteOrder}
+								disabled={completeMutation.isPending}
+								className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+							>
+								{completeMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hoàn thành'}
+							</button>
+						</div>
 					</div>
 				</div>
 			)}
