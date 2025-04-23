@@ -69,13 +69,13 @@ const AddProduct = () => {
       });
 
       // Thêm biến thể sản phẩm
-      variations.forEach((variation, index) => {
-        formDataWithImages.append(`variations[${index}][color_id]`, variation.color_id);
-        formDataWithImages.append(`variations[${index}][size_id]`, variation.size_id);
-        formDataWithImages.append(`variations[${index}][price]`, variation.price);
-        formDataWithImages.append(`variations[${index}][stock_quantity]`, variation.stock_quantity);
+      variations.forEach((variation) => {
+        formDataWithImages.append(`color_id`, variation.color_id);
+        formDataWithImages.append(`size_id`, variation.size_id);
+        formDataWithImages.append(`price`, variation.price);
+        formDataWithImages.append(`stock_quantity`, variation.stock_quantity);
         if (variation.sale_price) {
-          formDataWithImages.append(`variations[${index}][sale_price]`, variation.sale_price);
+          formDataWithImages.append(`sale_price`, variation.sale_price);
         }
       });
 
@@ -88,6 +88,7 @@ const AddProduct = () => {
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      setLoading(false);
     }
   });
 
@@ -106,6 +107,14 @@ const AddProduct = () => {
     }
     if (!variations.every(v => v.color_id && v.size_id && v.price)) {
       toast.error('Vui lòng điền đầy đủ thông tin biến thể');
+      return;
+    }
+    // Kiểm tra giá sale phải nhỏ hơn giá gốc
+    const invalidSalePrice = variations.some(v => 
+      v.sale_price && Number(v.sale_price) >= Number(v.price)
+    );
+    if (invalidSalePrice) {
+      toast.error('Giá khuyến mãi phải nhỏ hơn giá gốc');
       return;
     }
 
