@@ -48,7 +48,7 @@ export const cancelOrder = async (orderId, cancelReason) => {
 // Complete order
 export const completeOrder = async (orderId) => {
     try {
-        const response = await instanceLocal.post(`/orders/history/${orderId}/complete`, null, {
+        const response = await instanceLocal.post(`/orders/${orderId}/complete`, null, {
             headers: getAuthHeaders(),
         });
         return response.data;
