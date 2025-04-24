@@ -5,36 +5,39 @@ import { productAll, searchProducts } from '../services/client/product';
 
 const Header = () => {
   // State lưu thông tin người dùng (nếu đã đăng nhập)
-  const [user, setUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const navigate = useNavigate();
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [user, setUser] = useState(null); // Lưu thông tin user (nếu có token trong localStorage)
+  const [searchTerm, setSearchTerm] = useState(''); // Từ khoá người dùng nhập vào ô tìm kiếm
+  const [searchResults, setSearchResults] = useState([]); // Kết quả tìm kiếm sản phẩm
+  const [isLoading, setIsLoading] = useState(false); // Trạng thái loading khi đang tìm kiếm
+  const [showDropdown, setShowDropdown] = useState(false); // Hiển thị dropdown kết quả tìm kiếm
+
+  const navigate = useNavigate(); // Hook dùng để chuyển trang
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // Giảm số lần gọi API bằng cách debounce 500ms
 
   useEffect(() => {
-    // Khi component mount, lấy user từ localStorage (nếu có)
+    // Khi component được mount, lấy thông tin người dùng từ localStorage (nếu có)
     const storedUser = localStorage.getItem('token');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(JSON.parse(storedUser)); // Parse JSON và lưu vào state user
     }
   }, []);
 
   useEffect(() => {
+    // Gọi API tìm kiếm sản phẩm mỗi khi debouncedSearchTerm thay đổi
     const fetchSearchResults = async () => {
       if (debouncedSearchTerm) {
-        setIsLoading(true);
+        setIsLoading(true); // Bắt đầu loading
         try {
-          const data = await searchProducts(debouncedSearchTerm);
-          setSearchResults(data);
-          setShowDropdown(true);
+          const data = await searchProducts(debouncedSearchTerm); // Gọi API tìm kiếm
+          setSearchResults(data); // Lưu kết quả vào state
+          setShowDropdown(true); // Hiển thị dropdown kết quả
         } catch (error) {
-          console.error('Error fetching search results:', error);
+          console.error('Lỗi khi tìm kiếm sản phẩm:', error);
         } finally {
-          setIsLoading(false);
+          setIsLoading(false); // Kết thúc loading
         }
       } else {
+        // Nếu input rỗng, ẩn dropdown và xóa kết quả tìm kiếm
         setSearchResults([]);
         setShowDropdown(false);
       }
@@ -43,21 +46,25 @@ const Header = () => {
     fetchSearchResults();
   }, [debouncedSearchTerm]);
 
+  // Xử lý đăng xuất: xoá token khỏi localStorage và chuyển về trang login
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
     navigate('/login');
   };
 
+  // Xử lý khi người dùng thay đổi input tìm kiếm
   const handleSearchInputChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Khi người dùng click vào 1 sản phẩm trong dropdown, chuyển đến trang chi tiết sản phẩm
   const handleProductClick = (productId) => {
-    navigate(`/product/detail/${productId}`);
-    setShowDropdown(false);
-    setSearchTerm('');
+    navigate(`/product/detail/${productId}`); // Chuyển trang
+    setShowDropdown(false); // Ẩn dropdown
+    setSearchTerm(''); // Reset input tìm kiếm
   };
+
 
   return (
     <header className="bg-white shadow-md">
@@ -93,7 +100,7 @@ const Header = () => {
                       className="p-3 hover:bg-gray-100 cursor-pointer flex items-center space-x-3 border-b border-gray-100"
                     >
                       <img
-                         src={`http://127.0.0.1:8000/storage/${product.main_image}`}
+                        src={`http://127.0.0.1:8000/storage/${product.main_image}`}
                         alt={product.name}
                         className="w-12 h-12 object-cover rounded"
                       />
