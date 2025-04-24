@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import useDebounce from '../hooks/useDebounce';
-import { searchProducts } from '../services/client/product';
+import { productAll, searchProducts } from '../services/client/product';
 
 const Header = () => {
   // State lưu thông tin người dùng (nếu đã đăng nhập)
@@ -54,7 +54,7 @@ const Header = () => {
   };
 
   const handleProductClick = (productId) => {
-    navigate(`/products/${productId}`);
+    navigate(`/product/detail/${productId}`);
     setShowDropdown(false);
     setSearchTerm('');
   };
@@ -89,7 +89,7 @@ const Header = () => {
                   {searchResults?.data.map((product) => (
                     <div
                       key={product._id}
-                      onClick={() => handleProductClick(product._id)}
+                      onClick={() => handleProductClick(product.id)}
                       className="p-3 hover:bg-gray-100 cursor-pointer flex items-center space-x-3 border-b border-gray-100"
                     >
                       <img
