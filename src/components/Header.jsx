@@ -126,16 +126,35 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               // Nếu đã đăng nhập, hiển thị tên người dùng và nút đăng xuất
-              <div className="flex items-center space-x-3">
-                <Link to={'/orders'}>
+              <div className="relative group">
+                <div className="flex items-center space-x-2 cursor-pointer">
                   <span className="text-gray-600">👤 {user.name}</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
-                >
-                  Logout
-                </button>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white shadow-xl rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top scale-95 group-hover:scale-100 border border-gray-100">
+                  <ul className="py-1">
+                    <li className="hover:bg-gray-50">
+                      <Link to="/profile" className="block px-4 py-2.5 text-sm text-gray-700 hover:text-red-500 transition-colors duration-200">
+                        Hồ sơ
+                      </Link>
+                    </li>
+                    <li className="hover:bg-gray-50">
+                      <Link to="/orders" className="block px-4 py-2.5 text-sm text-gray-700 hover:text-red-500 transition-colors duration-200">
+                        Đơn hàng
+                      </Link>
+                    </li>
+                    <li className="hover:bg-gray-50 border-t border-gray-100">
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors duration-200"
+                      >
+                        Đăng xuất
+                      </button>
+                    </li>
+                  </ul>
+                </div>
               </div>
             ) : (
               // Nếu chưa đăng nhập, hiển thị liên kết đến trang đăng nhập
