@@ -34,12 +34,15 @@ const Login = () => {
 
       // Gọi API đăng nhập
       const res = await authService.login({ email, password });
-      location.reload();
+      
       // Hiển thị thông báo thành công
       toast.success('Đăng nhập thành công!');
 
       // Chuyển hướng về trang chủ
       navigate('/');
+      
+      // Reload trang sau khi đã chuyển hướng
+      location.reload();
     } catch (err: any) {
       // Hiển thị lỗi
       setError(err.response?.data?.message || 'Đăng nhập thất bại!');

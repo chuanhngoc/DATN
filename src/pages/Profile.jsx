@@ -4,72 +4,92 @@ import { Link } from "react-router-dom";
 import { profile, updateProfile, updatePW } from "../services/client/user";
 
 const Profile = () => {
+    // State quản lý hiển thị form chỉnh sửa profile và đổi mật khẩu
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+    // State lưu file avatar đã chọn
     const [selectedAvatar, setSelectedAvatar] = useState(null);
+
+    // Ref dùng để trigger input file (nếu muốn click từ nút ngoài)
     const fileInputRef = useRef(null);
+
+    // React Query client để thao tác invalidate cache sau mutation
     const queryClient = useQueryClient();
 
+    // Lấy dữ liệu user hiện tại từ API
     const { data, isLoading } = useQuery({
-        queryKey: ['userId'],
-        queryFn: () => profile()
+        queryKey: ['userId'], // định danh cache
+        queryFn: () => profile(), // gọi API profile
     });
 
+    // Mutation cập nhật thông tin user
     const updateProfileMutation = useMutation({
-        mutationFn: updateProfile,
+        mutationFn: updateProfile, // gọi API cập nhật
         onSuccess: () => {
-            queryClient.invalidateQueries(['userId']);
-            setIsEditProfileOpen(false);
-            setSelectedAvatar(null);
+            queryClient.invalidateQueries(['userId']); // refetch lại user sau cập nhật
+            setIsEditProfileOpen(false); // đóng form chỉnh sửa
+            setSelectedAvatar(null); // reset avatar
         },
     });
 
+    // Mutation đổi mật khẩu
     const updatePasswordMutation = useMutation({
-        mutationFn: updatePW,
+        mutationFn: updatePW, // gọi API đổi mật khẩu
         onSuccess: () => {
-            setIsChangePasswordOpen(false);
-            // You might want to add a success notification here
+            setIsChangePasswordOpen(false); // đóng form đổi mật khẩu
         },
         onError: (error) => {
-            // You might want to add an error notification here
-            console.error('Password change failed:', error);
+            console.error('Password change failed:', error); // log lỗi nếu có
         }
     });
 
+    // Gửi form cập nhật thông tin người dùng
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
+
+        // Tạo formData để gửi dạng multipart/form-data
         const formData = new FormData();
         formData.append('name', e.target.name.value);
         formData.append('phone', e.target.phone.value);
         formData.append('address', e.target.address.value);
-        formData.append('_method', "PUT");
+        formData.append('_method', "PUT"); // hỗ trợ method spoofing cho Laravel nếu dùng POST
+
         if (selectedAvatar) {
-            formData.append('avatar', selectedAvatar);
+            formData.append('avatar', selectedAvatar); // thêm avatar nếu có
         }
+
+        // Gửi mutation cập nhật
         await updateProfileMutation.mutateAsync(formData);
     };
 
+    // Gửi form đổi mật khẩu
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
+
+        // Thu thập dữ liệu form
         const passwordData = {
             current_password: e.target.current_password.value,
             new_password: e.target.new_password.value,
             new_password_confirmation: e.target.new_password_confirmation.value,
         };
 
+        // Kiểm tra xác nhận mật khẩu
         if (passwordData.new_password !== passwordData.new_password_confirmation) {
             alert('Mật khẩu mới không khớp!');
             return;
         }
 
         try {
+            // Gửi mutation đổi mật khẩu
             await updatePasswordMutation.mutateAsync(passwordData);
-            e.target.reset(); // Clear form after successful submission
+            e.target.reset(); // reset form nếu thành công
         } catch (error) {
             console.error('Error changing password:', error);
         }
     };
 
+    // Khi chọn avatar mới, lưu vào state
     const handleAvatarChange = (e) => {
         if (e.target.files?.[0]) {
             setSelectedAvatar(e.target.files[0]);
@@ -93,7 +113,7 @@ const Profile = () => {
                             <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
                                 {data?.avatar ? (
                                     <img
-                                        src={data.avatar}
+                                        src={`http://127.0.0.1:8000/storage/${data.avatar}`}
                                         alt="Profile"
                                         className="h-24 w-24 rounded-full object-cover"
                                     />
@@ -131,33 +151,33 @@ const Profile = () => {
                                 <p className="mt-1 text-gray-900">{data?.email}</p>
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Phone</label>
+                                <label className="text-sm font-medium text-gray-500">Số điện thoại</label>
                                 <p className="mt-1 text-gray-900">{data?.phone}</p>
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Address</label>
+                                <label className="text-sm font-medium text-gray-500">Địa chỉ</label>
                                 <p className="mt-1 text-gray-900">{data?.address}</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Account Status</label>
+                                <label className="text-sm font-medium text-gray-500">Trạng thái tài khoản</label>
                                 <p className="mt-1">
                                     <span className={`px-2 py-1 text-sm rounded-full ${data?.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {data?.is_active ? 'Active' : 'Inactive'}
+                                        {data?.is_active ? 'Đang hoạt động' : 'Không hoạt động'}
                                     </span>
                                 </p>
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Member Since</label>
+                                <label className="text-sm font-medium text-gray-500">Ngày tham gia</label>
                                 <p className="mt-1 text-gray-900">
                                     {new Date(data?.created_at).toLocaleDateString()}
                                 </p>
                             </div>
                             {data?.inactive_reason && (
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">Inactive Reason</label>
+                                    <label className="text-sm font-medium text-gray-500">Lý do không hoạt động</label>
                                     <p className="mt-1 text-gray-900">{data.inactive_reason}</p>
                                 </div>
                             )}
@@ -174,7 +194,7 @@ const Profile = () => {
                         <form onSubmit={handleProfileSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Ảnh đại diện</label>
-                                <div className="mt-1 flex items-center">
+                                <div className="mt-1 flex items-center space-x-4">
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -189,7 +209,16 @@ const Profile = () => {
                                     >
                                         Chọn ảnh
                                     </button>
-                                    {selectedAvatar && <span className="ml-2 text-sm text-gray-500">{selectedAvatar.name}</span>}
+                                    {selectedAvatar && (
+                                        <div className="flex items-center space-x-2">
+                                            <img
+                                                src={URL.createObjectURL(selectedAvatar)}
+                                                alt="Preview"
+                                                className="h-12 w-12 rounded-full object-cover"
+                                            />
+                                            <span className="text-sm text-gray-500">{selectedAvatar.name}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div>
