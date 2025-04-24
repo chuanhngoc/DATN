@@ -34,6 +34,7 @@ import OrderDetail from './pages/OrderDetail';
 import Orders from './pages/admin/Orders';
 import OrderDetailAdmin from './pages/admin/orders/detail';
 import ProductAll from './pages/Products';
+import CategoriesProduct from './pages/CategoryProduct';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
       {
         path: 'products',
         element: <ProductAll />
+      },
+      {
+        path: 'categories/:id/products',
+        element: <CategoriesProduct />
       },
       {
         path: 'cart',

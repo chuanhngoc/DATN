@@ -2,6 +2,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import useDebounce from '../hooks/useDebounce';
 import { productAll, searchProducts } from '../services/client/product';
+import { useQuery } from '@tanstack/react-query';
+import { categoriesAll } from '../services/client/categories';
 
 const Header = () => {
   // State lưu thông tin người dùng (nếu đã đăng nhập)
@@ -21,6 +23,11 @@ const Header = () => {
       setUser(JSON.parse(storedUser)); // Parse JSON và lưu vào state user
     }
   }, []);
+
+  const { data: categories, refetch } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAll()
+  });
 
   useEffect(() => {
     // Gọi API tìm kiếm sản phẩm mỗi khi debouncedSearchTerm thay đổi
@@ -150,8 +157,38 @@ const Header = () => {
         {/* Thanh menu điều hướng chính */}
         <nav className="py-4 border-t border-gray-200">
           <ul className="flex items-center justify-center space-x-8">
-            <li><Link to="/" className="text-gray-600 hover:text-red-500 font-medium">Trang chủ</Link></li>
-            <li><Link to="/products" className="text-gray-600 hover:text-red-500 font-medium">Sản phẩm</Link></li>
+            {/* Các link tĩnh */}
+            <li>
+              <Link to="/" className="text-gray-600 hover:text-red-500 font-medium">Trang chủ</Link>
+            </li>
+            <li>
+              <Link to="/products" className="text-gray-600 hover:text-red-500 font-medium">Sản phẩm</Link>
+            </li>
+
+            {/* Danh mục có dropdown */}
+            <li className="relative group">
+              <span className="text-gray-600 hover:text-red-500 font-medium cursor-pointer flex items-center">
+                Danh mục
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </span>
+              <div className="absolute left-0 top-full mt-2 w-48 bg-white shadow-xl rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top scale-95 group-hover:scale-100 border border-gray-100">
+                <ul className="py-1">
+                  {categories?.map((category) => (
+                    <li key={category.id} className="hover:bg-gray-50">
+                      <Link
+                        to={`/categories/${category.id}/products`}
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:text-red-500 transition-colors duration-200"
+                      >
+                        {category.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+
           </ul>
         </nav>
       </div>
