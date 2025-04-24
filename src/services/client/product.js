@@ -24,7 +24,7 @@ export const getProductById = async (id) => {
 export const searchProducts = async (searchTerm) => {
     try {
         const response = await instanceLocal.get('/products/search', {
-            params: { q: searchTerm }
+            params: { keyword: searchTerm }
         });
         return response.data;
     } catch (error) {
@@ -32,11 +32,19 @@ export const searchProducts = async (searchTerm) => {
     }
 };
 
-export const productAll = async (data) => {
+// Hàm lấy tất cả sản phẩm và tìm kiếm sản phẩm
+export const productAll = async (searchTerm = '') => {
     try {
-        const response = await instanceLocal.get('/products', data);
+        // Nếu có từ khóa tìm kiếm, gọi API search
+        if (searchTerm) {
+            const response = await instanceLocal.get(`/products`);
+            return response.data;
+        }
+        // Nếu không có từ khóa, lấy tất cả sản phẩm
+        const response = await instanceLocal.get('/products');
         return response.data;
     } catch (error) {
-        throw new Error('Lỗi');
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+        throw error;
     }
 };

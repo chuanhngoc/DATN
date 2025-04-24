@@ -1,28 +1,62 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import useDebounce from '../hooks/useDebounce';
+import { searchProducts } from '../services/client/product';
 
 const Header = () => {
   // State lưu thông tin người dùng (nếu đã đăng nhập)
   const [user, setUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     // Khi component mount, lấy user từ localStorage (nếu có)
     const storedUser = localStorage.getItem('token');
     if (storedUser) {
-      setUser(JSON.parse(storedUser)); // Chuyển JSON thành object và set vào state
+      setUser(JSON.parse(storedUser));
     }
   }, []);
 
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (debouncedSearchTerm) {
+        setIsLoading(true);
+        try {
+          const data = await searchProducts(debouncedSearchTerm);
+          setSearchResults(data);
+          setShowDropdown(true);
+        } catch (error) {
+          console.error('Error fetching search results:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setSearchResults([]);
+        setShowDropdown(false);
+      }
+    };
+
+    fetchSearchResults();
+  }, [debouncedSearchTerm]);
+
   const handleLogout = () => {
-    // Xoá thông tin user và token khỏi localStorage
     localStorage.removeItem('token');
-
-    // Cập nhật state để giao diện chuyển về trạng thái chưa đăng nhập
     setUser(null);
-
-    // Điều hướng về trang đăng nhập
     navigate('/login');
+  };
+
+  const handleSearchInputChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleProductClick = (productId) => {
+    navigate(`/products/${productId}`);
+    setShowDropdown(false);
+    setSearchTerm('');
   };
 
   return (
@@ -40,12 +74,37 @@ const Header = () => {
             <div className="relative">
               <input
                 type="text"
+                value={searchTerm}
+                onChange={handleSearchInputChange}
                 placeholder="Tìm kiếm sản phẩm..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-red-500"
               />
               <button className="absolute right-3 top-2 text-gray-500">
-                🔍
+                {isLoading ? '⌛' : '🔍'}
               </button>
+
+              {/* Dropdown kết quả tìm kiếm */}
+              {showDropdown && searchResults?.data.length > 0 && (
+                <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                  {searchResults?.data.map((product) => (
+                    <div
+                      key={product._id}
+                      onClick={() => handleProductClick(product._id)}
+                      className="p-3 hover:bg-gray-100 cursor-pointer flex items-center space-x-3 border-b border-gray-100"
+                    >
+                      <img
+                         src={`http://127.0.0.1:8000/storage/${product.main_image}`}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div>
+                        <div className="font-medium text-gray-800">{product.name}</div>
+                        <div className="text-red-500 text-sm">{product.variation_min_price?.price.toLocaleString('vi-VN')}₫</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -86,7 +145,6 @@ const Header = () => {
           <ul className="flex items-center justify-center space-x-8">
             <li><Link to="/" className="text-gray-600 hover:text-red-500 font-medium">Trang chủ</Link></li>
             <li><Link to="/products" className="text-gray-600 hover:text-red-500 font-medium">Sản phẩm</Link></li>
-            <li><Link to="/sale" className="text-red-500 font-medium">Khuyến mãi</Link></li>
           </ul>
         </nav>
       </div>
