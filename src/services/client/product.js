@@ -31,3 +31,12 @@ export const searchProducts = async (searchTerm) => {
         throw new Error('Không thể tìm kiếm sản phẩm');
     }
 };
+
+export const productAll = async (data) => {
+    try {
+        const response = await instanceLocal.get('/products', data);
+        return response.data;
+    } catch (error) {
+        throw new Error('Lỗi');
+    }
+};

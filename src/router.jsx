@@ -33,6 +33,7 @@ import PaymentResult from './pages/PaymentResult';
 import OrderDetail from './pages/OrderDetail';
 import Orders from './pages/admin/Orders';
 import OrderDetailAdmin from './pages/admin/orders/detail';
+import ProductAll from './pages/Products';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
       {
         path: 'product/detail/:id',
         element: <ProductDetail />
+      },
+      {
+        path: 'products',
+        element: <ProductAll />
       },
       {
         path: 'cart',
