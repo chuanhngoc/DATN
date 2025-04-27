@@ -91,7 +91,7 @@ const Products = () => {
                   <div className="text-sm text-gray-900">{product.description}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{product.category_id}</div>
+                  <div className="text-sm text-gray-900">{product.category.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.is_active

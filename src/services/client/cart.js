@@ -29,8 +29,8 @@ export const addToCart = async (data) => {
     } catch (error) {
         if (error.response?.status === 401) {
             throw new Error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-        }
-        throw new Error('Không thể thêm sản phẩm vào giỏ hàng');
+        }        
+        throw new Error(error.response.data.message);
     }
 };
 

@@ -14,6 +14,7 @@ const OrderDetailAdmin = () => {
 	const [showRejectModal, setShowRejectModal] = useState(false);
 	const [showRefundedModal, setShowRefundedModal] = useState(false);
 	const [showCompleteConfirmModal, setShowCompleteConfirmModal] = useState(false);
+	const [showRefundDetailsModal, setShowRefundDetailsModal] = useState(false);
 	const [newStatusId, setNewStatusId] = useState('');
 	const [cancelReason, setCancelReason] = useState('');
 	const [rejectReason, setRejectReason] = useState('');
@@ -162,6 +163,7 @@ const OrderDetailAdmin = () => {
 		setShowRejectModal(false);
 		setShowRefundedModal(false);
 		setShowCompleteConfirmModal(false);
+		setShowRefundDetailsModal(false);
 		setNewStatusId('');
 		setCancelReason('');
 		setRejectReason('');
@@ -304,26 +306,14 @@ const OrderDetailAdmin = () => {
 						Thay đổi trạng thái
 					</button>
 
-
-					{order?.refund !== null && order?.refund?.status === 'pending' && (
-						<>
-							<button
-								onClick={() => approveRefundMutation.mutate()}
-								disabled={approveRefundMutation.isPending}
-								className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-							>
-								<CheckCircle size={20} />
-								{approveRefundMutation.isPending ? 'Đang xử lý...' : 'Đồng ý hoàn tiền'}
-							</button>
-							<button
-								onClick={handleOpenRejectModal}
-								disabled={rejectRefundMutation.isPending}
-								className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-							>
-								<XCircle size={20} />
-								{rejectRefundMutation.isPending ? 'Đang xử lý...' : 'Từ chối hoàn tiền'}
-							</button>
-						</>
+					{order?.refund !== null && (
+						<button
+							onClick={() => setShowRefundDetailsModal(true)}
+							className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+						>
+							<DollarSign size={20} />
+							Xem chi tiết hoàn tiền
+						</button>
 					)}
 
 					{order?.refund !== null && order?.refund?.status === 'approved' && (
@@ -377,6 +367,12 @@ const OrderDetailAdmin = () => {
 								<div className="text-sm text-gray-600 mb-1">Trạng thái thanh toán</div>
 								<div className="text-sm font-medium">{order?.payment_status?.name}</div>
 							</div>
+							{order?.cancel_reason && (
+								<div className="col-span-2">
+									<div className="text-sm text-gray-600 mb-1">Lý do hủy đơn hàng</div>
+									<div className="text-sm font-medium text-red-600 bg-red-50 rounded px-3 py-2 border border-red-200">{order.cancel_reason}</div>
+								</div>
+							)}
 						</div>
 					</div>
 
@@ -449,68 +445,6 @@ const OrderDetailAdmin = () => {
 							)}
 						</div>
 					</div>
-
-					{/* Refund Information */}
-					{order?.refund !== null && (
-						<div className="p-6 border-b">
-							<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-								<DollarSign className="text-gray-500" size={20} />
-								Thông tin hoàn tiền
-							</h2>
-							<div className="space-y-4">
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Loại hoàn tiền</div>
-									<div className="text-sm font-medium">
-										{order.refund.type === 'return_after_received' ? 'Hoàn tiền sau khi nhận hàng' : 'Hoàn tiền trước khi nhận hàng'}
-									</div>
-								</div>
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Số tiền hoàn</div>
-									<div className="text-sm font-medium">{formatPrice(order.refund.amount)}</div>
-								</div>
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Lý do hoàn tiền</div>
-									<div className="text-sm font-medium">{order.refund.reason}</div>
-								</div>
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Trạng thái</div>
-									<div className="text-sm font-medium">{order.refund.status}</div>
-								</div>
-								{order.refund.reject_reason && (
-									<div>
-										<div className="text-sm text-gray-600 mb-1">Lý do từ chối</div>
-										<div className="text-sm font-medium">{order.refund.reject_reason}</div>
-									</div>
-								)}
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Thông tin ngân hàng</div>
-									<div className="text-sm font-medium">
-										<div>Ngân hàng: {order.refund.bank_name}</div>
-										<div>Chủ tài khoản: {order.refund.bank_account_name}</div>
-										<div>Số tài khoản: {order.refund.bank_account_number}</div>
-									</div>
-								</div>
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Thời gian phê duyệt</div>
-									<div className="text-sm font-medium">{order.refund.approved_at}</div>
-								</div>
-								<div>
-									<div className="text-sm text-gray-600 mb-1">Thời gian hoàn tiền</div>
-									<div className="text-sm font-medium">{order.refund.refunded_at}</div>
-								</div>
-								{order.refund.refund_proof_image && (
-									<div>
-										<div className="text-sm text-gray-600 mb-1">Ảnh chứng minh hoàn tiền</div>
-										<img
-											src={`${import.meta.env.VITE_API_URL}/${order.refund.refund_proof_image}`}
-											alt="Ảnh chứng minh hoàn tiền"
-											className="w-32 h-32 object-cover rounded-md"
-										/>
-									</div>
-								)}
-							</div>
-						</div>
-					)}
 
 					<div className="p-6">
 						<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -773,6 +707,153 @@ const OrderDetailAdmin = () => {
 								{completeMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hoàn thành'}
 							</button>
 						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Refund Details Modal */}
+			{showRefundDetailsModal && (
+				<div className="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+						<div className="flex justify-between items-center mb-6">
+							<h2 className="text-2xl font-semibold flex items-center gap-2">
+								<DollarSign className="text-gray-500" size={24} />
+								Chi tiết yêu cầu hoàn tiền
+							</h2>
+							<button
+								onClick={() => setShowRefundDetailsModal(false)}
+								className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+							>
+								<XCircle size={24} />
+							</button>
+						</div>
+
+						<div className="grid grid-cols-2 gap-6">
+							{/* Left Column - Basic Information */}
+							<div className="space-y-6">
+								<div className="bg-gray-50 p-4 rounded-lg">
+									<h3 className="text-lg font-medium mb-4">Thông tin cơ bản</h3>
+									<div className="space-y-3">
+										<div>
+											<div className="text-sm text-gray-600">Loại hoàn tiền</div>
+											<div className="font-medium">
+												{order.refund.type === 'return_after_received' ? 'Hoàn tiền sau khi nhận hàng' : 'Hoàn tiền trước khi nhận hàng'}
+											</div>
+										</div>
+										<div>
+											<div className="text-sm text-gray-600">Số tiền hoàn</div>
+											<div className="font-medium text-green-600">{formatPrice(order.refund.amount)}</div>
+										</div>
+										<div>
+											<div className="text-sm text-gray-600">Trạng thái</div>
+											<div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+												order.refund.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+												order.refund.status === 'approved' ? 'bg-green-100 text-green-800' :
+												order.refund.status === 'rejected' ? 'bg-red-100 text-red-800' :
+												'bg-blue-100 text-blue-800'
+											}`}>
+												{order.refund.status === 'pending' ? 'Đang chờ xử lý' :
+												order.refund.status === 'approved' ? 'Đã phê duyệt' :
+												order.refund.status === 'rejected' ? 'Đã từ chối' :
+												'Đã hoàn tiền'}
+											</div>
+										</div>
+										<div>
+											<div className="text-sm text-gray-600">Thời gian yêu cầu</div>
+											<div className="font-medium">{formatDate(order.refund.created_at)}</div>
+										</div>
+									</div>
+								</div>
+
+								<div className="bg-gray-50 p-4 rounded-lg">
+									<h3 className="text-lg font-medium mb-4">Thông tin ngân hàng</h3>
+									<div className="space-y-3">
+										<div>
+											<div className="text-sm text-gray-600">Ngân hàng</div>
+											<div className="font-medium">{order.refund.bank_name}</div>
+										</div>
+										<div>
+											<div className="text-sm text-gray-600">Chủ tài khoản</div>
+											<div className="font-medium">{order.refund.bank_account_name}</div>
+										</div>
+										<div>
+											<div className="text-sm text-gray-600">Số tài khoản</div>
+											<div className="font-medium">{order.refund.bank_account_number}</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Right Column - Reason and Images */}
+							<div className="space-y-6">
+								<div className="bg-gray-50 p-4 rounded-lg">
+									<h3 className="text-lg font-medium mb-4">Lý do hoàn tiền</h3>
+									<div className="bg-white p-4 rounded-lg border">
+										<p className="text-gray-700">{order.refund.reason}</p>
+									</div>
+								</div>
+
+								<div className="bg-gray-50 p-4 rounded-lg">
+									<h3 className="text-lg font-medium mb-4">Hình ảnh đính kèm</h3>
+									<div className="grid grid-cols-2 gap-4">
+										{order.refund.images?.map((image, index) => (
+											<div key={index} className="relative aspect-square">
+												<img
+													src={`${import.meta.env.VITE_API_URL}/${image}`}
+													alt={`Refund image ${index + 1}`}
+													className="w-full h-full object-cover rounded-lg"
+												/>
+											</div>
+										))}
+									</div>
+								</div>
+
+								{order.refund.reject_reason && (
+									<div className="bg-gray-50 p-4 rounded-lg">
+										<h3 className="text-lg font-medium mb-4">Lý do từ chối</h3>
+										<div className="bg-white p-4 rounded-lg border border-red-200">
+											<p className="text-red-600">{order.refund.reject_reason}</p>
+										</div>
+									</div>
+								)}
+
+								{order.refund.refund_proof_image && (
+									<div className="bg-gray-50 p-4 rounded-lg">
+										<h3 className="text-lg font-medium mb-4">Ảnh chứng minh hoàn tiền</h3>
+										<div className="relative aspect-video">
+											<img
+												src={`${import.meta.env.VITE_API_URL}/${order.refund.refund_proof_image}`}
+												alt="Refund proof"
+												className="w-full h-full object-cover rounded-lg"
+											/>
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+
+						{order.refund.status === 'pending' && (
+							<div className="mt-6 flex justify-end gap-3">
+								<button
+									onClick={() => {
+										setShowRefundDetailsModal(false);
+										handleOpenRejectModal();
+									}}
+									className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+								>
+									Từ chối
+								</button>
+								<button
+									onClick={() => {
+										setShowRefundDetailsModal(false);
+										approveRefundMutation.mutate();
+									}}
+									className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
+								>
+									Phê duyệt
+								</button>
+							</div>
+						)}
 					</div>
 				</div>
 			)}
