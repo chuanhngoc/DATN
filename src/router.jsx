@@ -38,6 +38,7 @@ import CategoriesProduct from './pages/CategoryProduct';
 import Profile from './pages/Profile';
 import Coupons from './pages/admin/cuopons';
 import CouponForm from './pages/admin/cuopons/Form';
+import Reviews from './pages/admin/reviews';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)

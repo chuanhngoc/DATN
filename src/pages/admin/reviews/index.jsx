@@ -21,8 +21,6 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
             onClose();
         } catch (error) {
             toast.error(error.message || 'Có lỗi xảy ra khi gửi phản hồi');
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -38,8 +36,6 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
             onClose();
         } catch (error) {
             toast.error(error.message || 'Có lỗi xảy ra khi thay đổi trạng thái');
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -218,11 +214,10 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
 const Reviews = () => {
     const queryClient = useQueryClient();
     const [selectedReview, setSelectedReview] = useState(null);
-    const [page, setPage] = useState(1);
 
     const { data: reviewsData, isLoading, error } = useQuery({
-        queryKey: ['reviews', page],
-        queryFn: () => reviewsService.getAll(page)
+        queryKey: ['reviews'],
+        queryFn: () => reviewsService.getAll()
     });
 
     const replyMutation = useMutation({
@@ -253,6 +248,17 @@ const Reviews = () => {
 
     const handleBlock = async (data) => {
         await blockMutation.mutate({ id: selectedReview.id, data });
+    };
+
+    const handleToggleVisibility = async (review) => {
+        if (review.is_active) {
+            setSelectedReview(review);
+        } else {
+            await blockMutation.mutate({ 
+                id: review.id, 
+                data: { is_active: true } 
+            });
+        }
     };
 
     if (isLoading) {
@@ -344,7 +350,7 @@ const Reviews = () => {
                                             </button>
                                         )}
                                         <button
-                                            onClick={() => setSelectedReview(review)}
+                                            onClick={() => handleToggleVisibility(review)}
                                             className={`transition-colors ${
                                                 review.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
                                             }`}
@@ -358,31 +364,6 @@ const Reviews = () => {
                     </tbody>
                 </table>
             </div>
-
-            {/* Pagination */}
-            {reviewsData?.total > 0 && (
-                <div className="mt-4 flex justify-center">
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        <button
-                            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                            disabled={page === 1}
-                            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Trước
-                        </button>
-                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                            Trang {page}
-                        </span>
-                        <button
-                            onClick={() => setPage(prev => prev + 1)}
-                            disabled={page >= Math.ceil(reviewsData.total / 10)}
-                            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Sau
-                        </button>
-                    </nav>
-                </div>
-            )}
 
             {selectedReview && (
                 <ReviewDetailModal
