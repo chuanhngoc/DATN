@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Edit2, Trash2, Plus, Eye, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState } from 'react';
@@ -104,19 +104,16 @@ const CouponDetailModal = ({ coupon, onClose }) => {
 
 const Coupons = () => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [selectedCoupon, setSelectedCoupon] = useState(null);
 
-    // TODO: Replace with actual API call
     const { data: coupons = [], isLoading, error } = useQuery({
         queryKey: ['coupons'],
-        queryFn: couponService.getAll()
+        queryFn: couponService.getAll
     });
 
-    // TODO: Implement delete mutation
     const deleteMutation = useMutation({
-        mutationFn: async (id) => {
-            // Implement delete API call
-        },
+        mutationFn: couponService.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['coupons'] });
             toast.success('Xóa mã giảm giá thành công');
@@ -126,9 +123,9 @@ const Coupons = () => {
         }
     });
 
-    const handleDelete = (id) => {
+    const handleDelete = (code) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa mã giảm giá này?')) {
-            deleteMutation.mutate(id);
+            deleteMutation.mutate(code);
         }
     };
 
@@ -179,7 +176,7 @@ const Coupons = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {coupons?.data?.map((coupon) => (
+                        {coupons?.map((coupon) => (
                             <tr key={coupon.code} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.code}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.name}</td>
@@ -203,7 +200,7 @@ const Coupons = () => {
                                             <Eye size={20} />
                                         </button>
                                         <Link
-                                            to={`/admin/coupons/edit/${coupon.code}`}
+                                            to={`/admin/coupons/edit/${coupon.id}`}
                                             className="text-blue-600 hover:text-blue-900 transition-colors"
                                         >
                                             <Edit2 size={20} />
