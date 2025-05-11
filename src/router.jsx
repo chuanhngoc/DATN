@@ -36,6 +36,8 @@ import OrderDetailAdmin from './pages/admin/orders/detail';
 import ProductAll from './pages/Products';
 import CategoriesProduct from './pages/CategoryProduct';
 import Profile from './pages/Profile';
+import Coupons from './pages/admin/cuopons';
+import CouponForm from './pages/admin/cuopons/Form';
 const router = createBrowserRouter([
   {
     // Route cho phần client (public)

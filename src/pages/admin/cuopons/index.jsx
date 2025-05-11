@@ -206,7 +206,7 @@ const Coupons = () => {
                                             <Edit2 size={20} />
                                         </Link>
                                         <button
-                                            onClick={() => handleDelete(coupon.code)}
+                                            onClick={() => handleDelete(coupon.id)}
                                             className="text-red-600 hover:text-red-900 transition-colors"
                                             disabled={deleteMutation.isPending}
                                         >

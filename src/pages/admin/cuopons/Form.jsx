@@ -14,13 +14,12 @@ const CouponForm = ({ isEdit }) => {
     queryKey: ['coupon', id],
     queryFn: () => couponService.getOne(id),
     enabled: isEdit,
-    onSuccess: (data) => {  
+    onSuccess: (data) => {
       if (data) {
         setDiscountType(data.type);
       }
     }
   });
-  console.log(coupon);
   const createMutation = useMutation({
     mutationFn: couponService.create,
     onSuccess: () => {
@@ -63,7 +62,7 @@ const CouponForm = ({ isEdit }) => {
       expiry_date: formData.get('expiry_date'),
       is_active: formData.get('is_active') === 'true'
     };
-
+    console.log(data);
     if (isEdit) {
       updateMutation.mutate({ id, data });
     } else {
@@ -93,6 +92,7 @@ const CouponForm = ({ isEdit }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+        <input type="hidden" name="id" defaultValue={coupon?.id} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -101,10 +101,10 @@ const CouponForm = ({ isEdit }) => {
             <input
               type="text"
               name="code"
-              defaultValue={coupon?.code}   
+              defaultValue={coupon?.code}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isEdit}
+              readOnly={isEdit}
             />
           </div>
 
