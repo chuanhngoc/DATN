@@ -188,3 +188,65 @@ export const getOrderDetailAdmin = async (orderId) => {
         throw error.response?.data?.message || 'Có lỗi xảy ra';
     }
 };
+
+// Add review for order
+export const addOrderReview = async (data) => {
+    try {
+        const formData = new FormData();
+        formData.append('order_id', data.order_id);
+        formData.append('order_item_id', data.order_item_id);
+        formData.append('product_id', data.product_id);
+        formData.append('rating', data.rating);
+        formData.append('content', data.content);
+        
+        // Append images if any
+        if (data.images && data.images.length > 0) {
+            data.images.forEach(image => {
+                formData.append('images[]', image);
+            });
+        }
+
+        const response = await instanceLocal.post(`/reviews`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                ...getAuthHeaders()
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
+
+// Update review
+export const updateOrderReview = async (reviewId, data) => {
+    try {
+        const formData = new FormData();
+        formData.append('rating', data.rating);
+        formData.append('content', data.content);
+        
+        // Append existing images to keep
+        if (data.keep_images && data.keep_images.length > 0) {
+            data.keep_images.forEach(image => {
+                formData.append('keep_images[]', image);
+            });
+        }
+
+        // Append new images if any
+        if (data.images && data.images.length > 0) {
+            data.images.forEach(image => {
+                formData.append('images[]', image);
+            });
+        }
+
+        const response = await instanceLocal.put(`/reviews/${reviewId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                ...getAuthHeaders()
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Có lỗi xảy ra';
+    }
+};
