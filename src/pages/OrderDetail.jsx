@@ -52,15 +52,16 @@ const ReviewModal = ({ isOpen, onClose, orderId, orderItem, onSuccess }) => {
                 await addOrderReview({
                     order_id: orderId,
                     order_item_id: orderItem.id,
-                    product_id: orderItem.product_id,
+                    variation_id: orderItem.variation_id,
                     rating,
                     content,
                     images
                 });
             }
-            onSuccess();
+            onSuccess(isEdit);
             onClose();
         } catch (error) {
+            console.log(error);
             toast.error(error.message || 'Có lỗi xảy ra khi gửi đánh giá');
         } finally {
             setIsSubmitting(false);
@@ -86,9 +87,8 @@ const ReviewModal = ({ isOpen, onClose, orderId, orderItem, onSuccess }) => {
                                     key={star}
                                     type="button"
                                     onClick={() => setRating(star)}
-                                    className={`text-2xl ${
-                                        star <= rating ? 'text-yellow-400' : 'text-gray-300'
-                                    }`}
+                                    className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                                        }`}
                                 >
                                     ★
                                 </button>
@@ -120,7 +120,7 @@ const ReviewModal = ({ isOpen, onClose, orderId, orderItem, onSuccess }) => {
                             onChange={handleImageChange}
                             className="w-full"
                         />
-                        
+
                         {/* Display existing images */}
                         {keepImages.length > 0 && (
                             <div className="mt-2">
@@ -497,26 +497,93 @@ const OrderDetail = () => {
                                     </>
                                 )}
 
-                                {(orderDetail?.status?.id === 4 || orderDetail?.status?.id === 5) && (
-                                    <>
-                                        {orderDetail?.items.map((item) => (
+
+                            </div>
+                        </div>
+                    </div>
+                    {(orderDetail?.status?.id === 4 || orderDetail?.status?.id === 5) && (
+                        <div className="space-y-4">
+                            {orderDetail?.items.map((item) => (
+                                <div key={item.id} className="rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-4">
+                                            <img
+                                                src={`http://127.0.0.1:8000/storage/${item.image}`}
+                                                alt={item.product_name}
+                                                className="w-16 h-16 object-cover rounded"
+                                            />
+                                            <div>
+                                                <h3 className="font-medium">{item.product_name}</h3>
+                                                <div className="text-sm text-gray-600">
+                                                    {Object.entries(item.variation).map(([key, value]) => (
+                                                        <span key={key}>{key}: {value} </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {item.review ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-1">
+                                                    {[...Array(5)].map((_, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className={`text-xl ${index < item.review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                                                }`}
+                                                        >
+                                                            ★
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsReviewModalOpen(true);
+                                                        setSelectedItem(item);
+                                                    }}
+                                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                                >
+                                                    Sửa đánh giá
+                                                </button>
+                                            </div>
+                                        ) : (
                                             <button
-                                                key={item.id}
                                                 onClick={() => {
                                                     setIsReviewModalOpen(true);
                                                     setSelectedItem(item);
                                                 }}
                                                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                             >
-                                                Đánh giá {item.product_name}
+                                                Đánh giá
                                             </button>
-                                        ))}
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                                        )}
+                                    </div>
 
+                                    {item.review && (
+                                        <div className="mt-4 pl-20">
+                                            <div className="bg-gray-50 rounded-lg p-4">
+                                                <p className="text-gray-700 mb-2">{item.review.content}</p>
+                                                {item.review.images && item.review.images.length > 0 && (
+                                                    <div className="flex gap-2 mt-2">
+                                                        {item.review.images.map((image, index) => (
+                                                            <img
+                                                                key={index}
+                                                                src={`http://127.0.0.1:8000/${image}`}
+                                                                alt={`Review ${index + 1}`}
+                                                                className="w-20 h-20 object-cover rounded"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <div className="text-sm text-gray-500 mt-2">
+                                                    {new Date(item.review.created_at).toLocaleDateString('vi-VN')}
+                                                    {item.review.is_updated && ' (Đã chỉnh sửa)'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     {/* Lịch sử đơn hàng */}
                     {orderDetail?.histories && orderDetail.histories.length > 0 && (
                         <div className="p-6 border-t">
@@ -730,7 +797,7 @@ const OrderDetail = () => {
                     }}
                     orderId={orderDetail.id}
                     orderItem={selectedItem}
-                    onSuccess={() => {
+                    onSuccess={(isEdit) => {
                         toast.success(isEdit ? 'Cập nhật đánh giá thành công' : 'Gửi đánh giá thành công');
                         queryClient.invalidateQueries(['order-detail', id]);
                     }}

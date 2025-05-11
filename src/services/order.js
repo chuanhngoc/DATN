@@ -195,7 +195,7 @@ export const addOrderReview = async (data) => {
         const formData = new FormData();
         formData.append('order_id', data.order_id);
         formData.append('order_item_id', data.order_item_id);
-        formData.append('product_id', data.product_id);
+        formData.append('variation_id', data.variation_id);
         formData.append('rating', data.rating);
         formData.append('content', data.content);
         
