@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Tag, Users, LogOut, Palette, Ruler } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, Users, LogOut, Palette, Ruler, MessageSquare, Ticket } from 'lucide-react';
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -70,8 +70,15 @@ const AdminLayout = () => {
             to="/admin/coupons"
             className={`flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 ${isActive('/admin/coupons')}`}
           >
-            <Package className="w-5 h-5 mr-2" />
+            <Ticket className="w-5 h-5 mr-2" />
             Mã giảm giá
+          </Link>
+          <Link
+            to="/admin/reviews"
+            className={`flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 ${isActive('/admin/reviews')}`}
+          >
+            <MessageSquare className="w-5 h-5 mr-2" />
+            Đánh giá
           </Link>
         </nav>
       </div>

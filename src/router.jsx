@@ -215,7 +215,11 @@ const router = createBrowserRouter([
           {
             path: 'coupons/edit/:id',
             element: <CouponForm isEdit={true} />
-          }
+          },
+            {
+            path: 'reviews',
+            element: <Reviews />
+          },
         ]
       },
 
