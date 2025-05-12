@@ -22,21 +22,30 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
         } catch (error) {
             toast.error(error.message || 'Có lỗi xảy ra khi gửi phản hồi');
         }
+        setIsSubmitting(false);
     };
 
     const handleBlock = async (e) => {
         e.preventDefault();
-        if (!review.is_active && !hiddenReason.trim()) {
-            toast.error('Vui lòng nhập lý do ẩn đánh giá');
-            return;
-        }
         setIsSubmitting(true);
         try {
-            await onBlock(review.is_active ? { is_active: false, hidden_reason: hiddenReason } : { is_active: true });
+            if (review.is_active) {
+                // Đang hiển thị, muốn ẩn => cần lý do
+                if (!hiddenReason.trim()) {
+                    toast.error('Vui lòng nhập lý do ẩn đánh giá');
+                    setIsSubmitting(false);
+                    return;
+                }
+                await onBlock({ is_active: false, hidden_reason: hiddenReason });
+            } else {
+                // Đang ẩn, muốn hiện lại => không cần lý do
+                await onBlock({ is_active: true });
+            }
             onClose();
         } catch (error) {
             toast.error(error.message || 'Có lỗi xảy ra khi thay đổi trạng thái');
         }
+        setIsSubmitting(false);
     };
 
     if (!review) return null;
@@ -165,7 +174,6 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
                                 </div>
                             </form>
                         )}
-
                         <form onSubmit={handleBlock} className="space-y-4">
                             {review.is_active ? (
                                 <>
@@ -213,7 +221,7 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
 
 const Reviews = () => {
     const queryClient = useQueryClient();
-    const [selectedReview, setSelectedReview] = useState(null);
+    const [selectedReviewForView, setSelectedReviewForView] = useState(null);
 
     const { data: reviewsData, isLoading, error } = useQuery({
         queryKey: ['reviews'],
@@ -243,22 +251,11 @@ const Reviews = () => {
     });
 
     const handleReply = async (reply) => {
-        await replyMutation.mutate({ id: selectedReview.id, reply });
+        await replyMutation.mutate({ id: selectedReviewForView.id, reply });
     };
 
     const handleBlock = async (data) => {
-        await blockMutation.mutate({ id: selectedReview.id, data });
-    };
-
-    const handleToggleVisibility = async (review) => {
-        if (review.is_active) {
-            setSelectedReview(review);
-        } else {
-            await blockMutation.mutate({ 
-                id: review.id, 
-                data: { is_active: true } 
-            });
-        }
+        await blockMutation.mutate({ id: selectedReviewForView.id, data });
     };
 
     if (isLoading) {
@@ -336,26 +333,10 @@ const Reviews = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex justify-end gap-2">
                                         <button
-                                            onClick={() => setSelectedReview(review)}
+                                            onClick={() => setSelectedReviewForView(review)}
                                             className="text-blue-600 hover:text-blue-900 transition-colors"
                                         >
                                             <Eye size={20} />
-                                        </button>
-                                        {!review.reply && (
-                                            <button
-                                                onClick={() => setSelectedReview(review)}
-                                                className="text-green-600 hover:text-green-900 transition-colors"
-                                            >
-                                                <MessageSquare size={20} />
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => handleToggleVisibility(review)}
-                                            className={`transition-colors ${
-                                                review.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
-                                            }`}
-                                        >
-                                            {review.is_active ? <EyeOff size={20} /> : <Eye size={20} />}
                                         </button>
                                     </div>
                                 </td>
@@ -365,10 +346,11 @@ const Reviews = () => {
                 </table>
             </div>
 
-            {selectedReview && (
+            {/* Modal xem chi tiết */}
+            {selectedReviewForView && (
                 <ReviewDetailModal
-                    review={selectedReview}
-                    onClose={() => setSelectedReview(null)}
+                    review={selectedReviewForView}
+                    onClose={() => setSelectedReviewForView(null)}
                     onReply={handleReply}
                     onBlock={handleBlock}
                 />

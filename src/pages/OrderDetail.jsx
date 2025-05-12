@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getOrderDetail, cancelOrder, retryPayment, requestRefund, completeOrder, addOrderReview, updateOrderReview } from '../services/order';
 import { toast } from 'react-toastify';
@@ -197,7 +197,6 @@ const ReviewModal = ({ isOpen, onClose, orderId, orderItem, onSuccess }) => {
 const OrderDetail = () => {
     // Hooks và state management
     const { id } = useParams();
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     // State cho các modal
@@ -218,6 +217,7 @@ const OrderDetail = () => {
     // State for review modal
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [selectedReview, setSelectedReview] = useState(null);
 
     // Query lấy thông tin chi tiết đơn hàng
     const { data: orderDetail, isLoading, error } = useQuery({
@@ -521,19 +521,18 @@ const OrderDetail = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        {item.review ? (
+                                        {!item.review ? (
+                                            <button
+                                                onClick={() => {
+                                                    setIsReviewModalOpen(true);
+                                                    setSelectedItem(item);
+                                                }}
+                                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                            >
+                                                Đánh giá
+                                            </button>
+                                        ) : item.review.is_update === false ? (
                                             <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-1">
-                                                    {[...Array(5)].map((_, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className={`text-xl ${index < item.review.rating ? 'text-yellow-400' : 'text-gray-300'
-                                                                }`}
-                                                        >
-                                                            ★
-                                                        </span>
-                                                    ))}
-                                                </div>
                                                 <button
                                                     onClick={() => {
                                                         setIsReviewModalOpen(true);
@@ -544,39 +543,66 @@ const OrderDetail = () => {
                                                     Sửa đánh giá
                                                 </button>
                                             </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => {
-                                                    setIsReviewModalOpen(true);
-                                                    setSelectedItem(item);
-                                                }}
-                                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md"
-                                            >
-                                                Đánh giá
-                                            </button>
-                                        )}
+                                        ) : null}
                                     </div>
 
                                     {item.review && (
                                         <div className="mt-4 pl-20">
-                                            <div className="bg-gray-50 rounded-lg p-4">
-                                                <p className="text-gray-700 mb-2">{item.review.content}</p>
+                                            <div className="bg-gray-50 rounded-lg p-4 flex flex-col gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <span key={i} className={i < item.review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                                                    ))}
+                                                    <span className={`px-2 py-1 text-xs rounded-full ${item.review.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                        {item.review.is_active ? 'Đang hiển thị' : 'Đã ẩn'}
+                                                    </span>
+                                                    {item.review.is_updated && (
+                                                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                                            Đã chỉnh sửa
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-gray-700">{item.review.content}</div>
                                                 {item.review.images && item.review.images.length > 0 && (
-                                                    <div className="flex gap-2 mt-2">
+                                                    <div className="grid grid-cols-4 gap-2 mt-2">
                                                         {item.review.images.map((image, index) => (
                                                             <img
                                                                 key={index}
                                                                 src={`http://127.0.0.1:8000/${image}`}
                                                                 alt={`Review ${index + 1}`}
-                                                                className="w-20 h-20 object-cover rounded"
+                                                                className="w-full h-24 object-cover rounded"
                                                             />
                                                         ))}
                                                     </div>
                                                 )}
-                                                <div className="text-sm text-gray-500 mt-2">
-                                                    {new Date(item.review.created_at).toLocaleDateString('vi-VN')}
-                                                    {item.review.is_updated && ' (Đã chỉnh sửa)'}
+                                                {item.review.reply && (
+                                                    <div className="mt-2 p-3 bg-white rounded border border-gray-200">
+                                                        <div className="font-medium text-gray-700">Phản hồi từ shop:</div>
+                                                        <div className="text-gray-600">{item.review.reply}</div>
+                                                        {item.review.reply_at && (
+                                                            <div className="text-xs text-gray-500 mt-1">
+                                                                {new Date(item.review.reply_at).toLocaleString('vi-VN')}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {item.review.hidden_reason && (
+                                                    <div className="text-red-600 text-sm">
+                                                        Lý do ẩn: {item.review.hidden_reason}
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                                    <span>Ngày đánh giá: {new Date(item.review.created_at).toLocaleString('vi-VN')}</span>
+                                                    {item.review.updated_at && (
+                                                        <span>Chỉnh sửa: {new Date(item.review.updated_at).toLocaleString('vi-VN')}</span>
+                                                    )}
                                                 </div>
+                                                <button
+                                                    onClick={() => setSelectedReview(item.review)}
+                                                    className="text-blue-600 underline text-sm w-fit"
+                                                >
+                                                    Xem chi tiết
+                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -803,7 +829,69 @@ const OrderDetail = () => {
                     }}
                 />
             )}
+
+            {selectedReview && (
+                <ReviewDetailModal
+                    review={selectedReview}
+                    onClose={() => setSelectedReview(null)}
+                />
+            )}
         </>
+    );
+};
+
+const ReviewDetailModal = ({ review, onClose }) => {
+    if (!review) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black opacity-50" onClick={onClose}></div>
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 z-50">
+                <div className="flex justify-between items-center p-6 border-b">
+                    <h2 className="text-2xl font-bold text-gray-900">Chi tiết đánh giá</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-500">×</button>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <span className="font-medium">Số sao: </span>
+                        {[...Array(5)].map((_, i) => (
+                            <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                        ))}
+                    </div>
+                    <div><span className="font-medium">Nội dung: </span>{review.content}</div>
+                    <div>
+                        <span className="font-medium">Trạng thái: </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${review.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{review.is_active ? 'Đang hiển thị' : 'Đã ẩn'}</span>
+                    </div>
+                    {review.hidden_reason && (
+                        <div><span className="font-medium">Lý do ẩn: </span><span className="text-red-600">{review.hidden_reason}</span></div>
+                    )}
+                    {review.images && review.images.length > 0 && (
+                        <div>
+                            <span className="font-medium">Hình ảnh: </span>
+                            <div className="grid grid-cols-4 gap-2 mt-2">
+                                {review.images.map((img, idx) => (
+                                    <img key={idx} src={`http://127.0.0.1:8000/${img}`} alt="" className="w-full h-24 object-cover rounded" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {review.reply && (
+                        <div>
+                            <span className="font-medium">Phản hồi: </span>{review.reply}
+                            <div className="text-xs text-gray-500">{review.reply_at && new Date(review.reply_at).toLocaleString('vi-VN')}</div>
+                        </div>
+                    )}
+                    <div>
+                        <span className="font-medium">Ngày đánh giá: </span>
+                        {review.created_at && new Date(review.created_at).toLocaleString('vi-VN')}
+                    </div>
+                    <div>
+                        <span className="font-medium">Ngày cập nhật: </span>
+                        {review.updated_at && new Date(review.updated_at).toLocaleString('vi-VN')}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

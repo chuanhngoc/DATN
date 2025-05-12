@@ -224,6 +224,7 @@ export const updateOrderReview = async (reviewId, data) => {
         const formData = new FormData();
         formData.append('rating', data.rating);
         formData.append('content', data.content);
+        formData.append('_method', 'PUT');
         
         // Append existing images to keep
         if (data.keep_images && data.keep_images.length > 0) {
@@ -239,7 +240,7 @@ export const updateOrderReview = async (reviewId, data) => {
             });
         }
 
-        const response = await instanceLocal.put(`/reviews/${reviewId}`, formData, {
+        const response = await instanceLocal.post(`/reviews/${reviewId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 ...getAuthHeaders()

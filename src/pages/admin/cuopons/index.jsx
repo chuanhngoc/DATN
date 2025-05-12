@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Edit2, Trash2, Plus, Eye, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState } from 'react';
@@ -42,7 +42,7 @@ const CouponDetailModal = ({ coupon, onClose }) => {
                             <div>
                                 <div className="text-sm font-medium text-gray-500">Loại giảm giá</div>
                                 <div className="mt-1 text-sm text-gray-900">
-                                    {coupon.type === 'percent' ? 'Phần trăm' : 'Số tiền cố định'}
+                                    {coupon.type === 'percent' ? 'Phần trăm' : 'Số tiền'}
                                 </div>
                             </div>
                         </div>
@@ -81,7 +81,7 @@ const CouponDetailModal = ({ coupon, onClose }) => {
                                 <div className="text-sm font-medium text-gray-500">Trạng thái</div>
                                 <div className="mt-1">
                                     <span className={`px-2 py-1 text-xs rounded-full ${coupon.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {coupon.is_active ? 'Đang hoạt động' : 'Đã hết hạn'}
+                                        {coupon.is_active ? 'Đang hoạt động' : 'Không hoạt động'}
                                     </span>
                                 </div>
                             </div>
@@ -104,7 +104,6 @@ const CouponDetailModal = ({ coupon, onClose }) => {
 
 const Coupons = () => {
     const queryClient = useQueryClient();
-    const navigate = useNavigate();
     const [selectedCoupon, setSelectedCoupon] = useState(null);
 
     const { data: coupons = [], isLoading, error } = useQuery({
@@ -169,6 +168,7 @@ const Coupons = () => {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại giảm giá</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giảm giá</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thời gian</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
@@ -180,6 +180,7 @@ const Coupons = () => {
                             <tr key={coupon.code} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.code}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.type === 'percent' ? 'Phần trăm' : 'Số tiền cố định'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {coupon.type === 'percent' ? `${coupon.discount_percent}%` : `${coupon.amount?.toLocaleString()}đ`}
                                 </td>
