@@ -92,7 +92,10 @@ export const changeOrderStatus = async (orderId, newStatusId, cancelReason = '')
             new_status_id: newStatusId,
             ...(newStatusId === 6 && { cancel_reason: cancelReason })
         };
-        const response = await instanceLocal.post(`/admin/orders/${orderId}/change-status`, data);
+        const response = await instanceLocal.post(`/admin/orders/${orderId}/change-status`, data,{
+               headers: 
+                getAuthHeaders()
+        });
         return response.data;
     } catch (error) {
         throw error.response?.data?.message || 'Có lỗi xảy ra';

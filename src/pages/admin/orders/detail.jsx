@@ -487,6 +487,13 @@ const OrderDetailAdmin = () => {
 									<div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
 									<div>
 										<div className="text-sm font-medium">{history.status}</div>
+										<div className="text-sm font-medium">
+											Người thay đổi: {
+												history.user_change === 'system'
+													? 'Hệ Thống'
+													: history.user_change.charAt(0).toUpperCase() + history.user_change.slice(1)
+											}
+										</div>
 										<div className="text-xs text-gray-500">{(history.created_at)}</div>
 									</div>
 								</div>

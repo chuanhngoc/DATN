@@ -54,7 +54,7 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black opacity-50" onClick={onClose}></div>
 
-            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 z-50">
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 z-50 overflow-y-auto max-h-screen">
                 <div className="flex justify-between items-center p-6 border-b">
                     <h2 className="text-2xl font-bold text-gray-900">Chi tiết đánh giá</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
@@ -301,7 +301,14 @@ const Reviews = () => {
                         {reviewsData?.data?.map((review) => (
                             <tr key={review.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {review.product?.name || 'Sản phẩm đã bị xóa'}
+                                    <div className="flex items-center gap-2">
+                                        <img
+                                            src={`http://127.0.0.1:8000/storage/${review.product.main_image}`}
+                                            alt={review.product.name}
+                                            className="w-10 h-10 object-cover rounded"
+                                        />
+                                        <span>{review.product.name}</span>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-1">

@@ -422,6 +422,27 @@ const OrderDetail = () => {
                                             <span className="text-gray-600">x{item.quantity}</span>
                                         </div>
                                     </div>
+                                    {!item.review ? (
+                                        <button
+                                            onClick={() => {
+                                                setIsReviewModalOpen(true);
+                                                setSelectedItem(item);
+                                            }}
+                                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                        >
+                                            Đánh giá
+                                        </button>
+                                    ) : item.review.is_updated === false ? (
+                                        <button
+                                            onClick={() => {
+                                                setIsReviewModalOpen(true);
+                                                setSelectedItem(item);
+                                            }}
+                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                        >
+                                            Sửa đánh giá
+                                        </button>
+                                    ) : null}
                                 </div>
                             ))}
                         </div>
@@ -531,18 +552,16 @@ const OrderDetail = () => {
                                             >
                                                 Đánh giá
                                             </button>
-                                        ) : item.review.is_update === false ? (
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setIsReviewModalOpen(true);
-                                                        setSelectedItem(item);
-                                                    }}
-                                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
-                                                >
-                                                    Sửa đánh giá
-                                                </button>
-                                            </div>
+                                        ) : item.review.is_updated === false ? (
+                                            <button
+                                                onClick={() => {
+                                                    setIsReviewModalOpen(true);
+                                                    setSelectedItem(item);
+                                                }}
+                                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                            >
+                                                Sửa đánh giá
+                                            </button>
                                         ) : null}
                                     </div>
 
