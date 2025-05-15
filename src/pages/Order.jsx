@@ -203,16 +203,7 @@ const Orders = () => {
 							Xóa bộ lọc
 						</button>
 						
-						<button
-							onClick={() => {
-								// Refresh query with current filters
-								// No need to do anything as React Query will automatically refetch when filters change
-							}}
-							className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-						>
-							<Search size={18} />
-							Tìm kiếm
-						</button>
+						
 					</div>
 				</div>
 			)}
