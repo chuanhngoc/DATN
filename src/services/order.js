@@ -159,9 +159,19 @@ export const retryPayment = async (orderId) => {
 
 //admin
 
-export const getAdminOrders = async () => {
+export const getAdminOrders = async (filters = {}) => {
     try {
-        const response = await instance.get(`/orders`, {
+        // Construct query parameters from filters
+        const queryParams = new URLSearchParams();
+        if (filters.status_id) queryParams.append('status_id', filters.status_id);
+        if (filters.order_code) queryParams.append('order_code', filters.order_code);
+        if (filters.name) queryParams.append('name', filters.name);
+        if (filters.phone) queryParams.append('phone', filters.phone);
+        
+        const queryString = queryParams.toString();
+        const url = `/orders${queryString ? `?${queryString}` : ''}`;
+        
+        const response = await instance.get(url, {
             headers: getAuthHeaders(),
         });
         return response.data;
