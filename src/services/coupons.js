@@ -1,5 +1,9 @@
-import instance from "./instance";
-
+import { token_auth } from "../auth/getToken";
+import instance, { instanceLocal } from "./instance";
+const getAuthHeaders = () => {
+    const token_ = token_auth();
+    return token_ ? { Authorization: `Bearer ${token_}` } : {};
+};
 const couponService = {
     getAll: async () => {
         return (await instance.get('/vouchers')).data.data;
@@ -15,6 +19,18 @@ const couponService = {
     },
     getOne: async (code) => {
         return (await instance.get(`/vouchers/${code}`)).data;
+    },
+
+    getVoucher: async (amount) => {
+        return (await instanceLocal.get(`/list-voucher?amount=${amount}`, {
+            headers: getAuthHeaders(),
+        })).data;
+    },
+
+    applyVoucher: async (data) => {
+        return (await instanceLocal.post('/apply-voucher', data, {
+            headers: getAuthHeaders(),
+        })).data;
     }
 };
 
