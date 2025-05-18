@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Eye, Filter, Search, X } from 'lucide-react';
-import { getAdminOrders, getOrderStatus } from '../../services/order';
 import { useState, useEffect } from 'react';
+import { getAdminOrders, getOrderStatus } from '../services/order';
 
 const Orders = () => {
 	const [filters, setFilters] = useState({

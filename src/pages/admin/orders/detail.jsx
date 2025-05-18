@@ -481,8 +481,8 @@ const OrderDetailAdmin = () => {
 							<Clock className="text-gray-500" size={20} />
 							Lịch sử đơn hàng
 						</h2>
-						<div className="space-y-4">
-							{order?.histories?.map((history) => (
+					<div className="space-y-4">
+							{[...order?.histories]?.reverse()?.map((history) => (
 								<div key={history.id} className="flex gap-4 pb-4 border-b last:border-0">
 									<div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
 									<div>
