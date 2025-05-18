@@ -1,19 +1,18 @@
-
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
+export const RevenueChart = ({ data }) => {
+  const chartData = data?.map(item => ({
+    date: item?.date,
+    revenue: item?.total_revenue || 0,
+    orders: item?.total_orders || 0,
+    average: item?.average_order_value || 0
+  })) || [];
 
-
-export function RevenueChart({ data }) {
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value)
   }
-
-  const chartData = data.map((item) => ({
-    ...item,
-    date: format(new Date(item.date), "dd/MM", { locale: vi }),
-  }))
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -59,22 +58,42 @@ export function RevenueChart({ data }) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="date" tickLine={false} axisLine={false} className="text-sm text-gray-500" />
-          <YAxis
-            tickFormatter={(value) => `${value / 1000000}M`}
-            tickLine={false}
-            axisLine={false}
-            className="text-sm text-gray-500"
+          <XAxis 
+            dataKey="date" 
+            tickFormatter={(value) => value?.split('-')[2] || ''}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <YAxis
+            tickFormatter={(value) => 
+              new Intl.NumberFormat('vi-VN', { 
+                notation: 'compact',
+                maximumFractionDigits: 1 
+              }).format(value)
+            }
+          />
+          <Tooltip
+            formatter={(value, name) => {
+              if (name === 'revenue' || name === 'average') {
+                return [
+                  new Intl.NumberFormat('vi-VN', { 
+                    style: 'currency', 
+                    currency: 'VND' 
+                  }).format(value),
+                  name === 'revenue' ? 'Doanh thu' : 'Giá trị trung bình'
+                ];
+              }
+              return [value, name === 'orders' ? 'Số đơn hàng' : name];
+            }}
+            labelFormatter={(label) => `Ngày ${label?.split('-')[2] || ''}`}
+          />
           <Area
             type="monotone"
-            dataKey="total_revenue"
+            dataKey="revenue"
             stroke="#3b82f6"
             fill="url(#colorRevenue)"
             activeDot={{ r: 6 }}
           />
-          <Area type="monotone" dataKey="total_orders" stroke="#10b981" fill="url(#colorOrders)" />
+          <Area type="monotone" dataKey="orders" stroke="#10b981" fill="url(#colorOrders)" />
+          <Area type="monotone" dataKey="average" stroke="#8b5cf6" fill="url(#colorRevenue)" />
         </AreaChart>
       </ResponsiveContainer>
     </div>

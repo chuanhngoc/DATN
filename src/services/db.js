@@ -21,7 +21,7 @@ export const db = {
             ...params
         }).toString();
         
-        // return await instance.get(`/dashboard?${queryParams}`).data;
+        return (await instance.get(`/dashboard?${queryParams}`)).data;
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 800))
 

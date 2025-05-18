@@ -1,37 +1,23 @@
-export function TopSellingProducts({ data }) {
-    const formatCurrency = (value) => {
-      return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value)
-    }
-  
-    return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sản phẩm
-              </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Đã bán
-              </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Doanh thu
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{product.total_sold}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                  {formatCurrency(product.total_revenue)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
+export const TopSellingProducts = ({ data }) => {
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  };
+
+  return (
+    <div className="space-y-4">
+      {data?.map((product, index) => (
+        <div key={product?.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+            <div>
+              <p className="font-medium text-gray-900">{product?.name}</p>
+              <p className="text-sm text-gray-500">Đã bán: {product?.total_sold || 0}</p>
+            </div>
+          </div>
+          <p className="font-bold text-blue-600">{formatCurrency(product?.total_revenue || 0)}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
   

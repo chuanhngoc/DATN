@@ -28,7 +28,7 @@ export function OverviewCards({ data }) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{data.total_orders}</div>
-          <p className="text-xs text-muted-foreground">Tỷ lệ chuyển đổi: {data.conversion_rate.toFixed(2)}%</p>
+          <p className="text-xs text-muted-foreground">Tỷ lệ chuyển đổi: {data?.conversion_rate?.toFixed(2)}%</p>
         </CardContent>
       </Card>
       <Card>

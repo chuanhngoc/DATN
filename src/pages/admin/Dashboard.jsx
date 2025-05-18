@@ -1,8 +1,7 @@
-
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { vi } from "date-fns/locale"
+import { da, vi } from "date-fns/locale"
 import { Clock, Star, Ticket } from "lucide-react"
 import {
   Calendar,
@@ -55,7 +54,6 @@ export default function Dashboard() {
         end_date: formattedEndDate,
       }),
   })
-
   const handleRefresh = () => {
     refetch()
   }
@@ -201,11 +199,11 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(dashboardData.overview.total_revenue)}
+                  {formatCurrency(dashboardData?.overview?.total_revenue)}
                 </div>
                 <p className="text-xs text-gray-500 mt-2 flex items-center">
                   <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1.5"></span>
-                  Giá trị đơn hàng trung bình: {formatCurrency(dashboardData.overview.average_order_value)}
+                  Giá trị đơn hàng trung bình: {formatCurrency(dashboardData?.overview?.average_order_value)}
                 </p>
               </div>
 
@@ -216,10 +214,10 @@ export default function Dashboard() {
                     <ShoppingCart className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{dashboardData.overview.total_orders}</div>
+                <div className="text-2xl font-bold text-gray-900">{dashboardData?.overview?.total_orders}</div>
                 <p className="text-xs text-gray-500 mt-2 flex items-center">
                   <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5"></span>
-                  Tỷ lệ chuyển đổi: {dashboardData.overview.conversion_rate.toFixed(2)}%
+                  Tỷ lệ chuyển đổi: {dashboardData?.overview?.conversion_rate}%
                 </p>
               </div>
 
@@ -230,10 +228,10 @@ export default function Dashboard() {
                     <Users className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{dashboardData.overview.total_users}</div>
+                <div className="text-2xl font-bold text-gray-900">{dashboardData?.overview?.total_users}</div>
                 <p className="text-xs text-gray-500 mt-2 flex items-center">
                   <span className="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1.5"></span>
-                  Đánh giá: {dashboardData.overview.total_reviews}
+                  Đánh giá: {dashboardData?.overview?.total_reviews}
                 </p>
               </div>
 
@@ -244,10 +242,10 @@ export default function Dashboard() {
                     <Package className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{dashboardData.overview.total_products}</div>
+                <div className="text-2xl font-bold text-gray-900">{dashboardData?.overview?.total_products}</div>
                 <p className="text-xs text-gray-500 mt-2 flex items-center">
                   <span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>
-                  Danh mục: {dashboardData.overview.total_categories}
+                  Danh mục: {dashboardData?.overview?.total_categories}
                 </p>
               </div>
             </div>
@@ -258,44 +256,40 @@ export default function Dashboard() {
                 <div className="flex overflow-x-auto">
                   <button
                     onClick={() => setActiveTab("revenue")}
-                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${
-                      activeTab === "revenue"
+                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${activeTab === "revenue"
                         ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     <BarChart3 className={`h-4 w-4 ${activeTab === "revenue" ? "text-blue-600" : "text-gray-400"}`} />
                     Doanh thu
                   </button>
                   <button
                     onClick={() => setActiveTab("orders")}
-                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${
-                      activeTab === "orders"
+                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${activeTab === "orders"
                         ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     <ShoppingBag className={`h-4 w-4 ${activeTab === "orders" ? "text-blue-600" : "text-gray-400"}`} />
                     Đơn hàng
                   </button>
                   <button
                     onClick={() => setActiveTab("products")}
-                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${
-                      activeTab === "products"
+                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${activeTab === "products"
                         ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     <Package className={`h-4 w-4 ${activeTab === "products" ? "text-blue-600" : "text-gray-400"}`} />
                     Sản phẩm
                   </button>
                   <button
                     onClick={() => setActiveTab("customers")}
-                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${
-                      activeTab === "customers"
+                    className={`px-5 py-3 text-sm font-medium flex items-center gap-2 ${activeTab === "customers"
                         ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     <UserCircle
                       className={`h-4 w-4 ${activeTab === "customers" ? "text-blue-600" : "text-gray-400"}`}
@@ -386,7 +380,7 @@ export default function Dashboard() {
                           Đơn hàng chờ xử lý
                         </h3>
                         <div className="mt-2 inline-flex items-center bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-xs font-medium">
-                          Tổng số: {dashboardData.pending_orders.total}
+                          Tổng số: {dashboardData?.pending_orders?.total}
                         </div>
                       </div>
                       <div className="p-5">
@@ -394,19 +388,19 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-700">Thời gian chờ trung bình:</span>
                             <span className="font-bold text-amber-600">
-                              {dashboardData.pending_orders.average_waiting_hours.toFixed(1)} giờ
+                              {dashboardData?.pending_orders?.average_waiting_hours} giờ
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-3">
                             <div
                               className="bg-gradient-to-r from-amber-400 to-amber-600 h-3 rounded-full"
                               style={{
-                                width: `${Math.min((dashboardData.pending_orders.average_waiting_hours / 24) * 100, 100)}%`,
+                                width: `${Math.min((dashboardData?.pending_orders?.average_waiting_hours / 24) * 100, 100)}%`,
                               }}
                             ></div>
                           </div>
                           <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            {dashboardData.pending_orders.average_waiting_hours < 12 ? (
+                            {dashboardData?.pending_orders?.average_waiting_hours < 12 ? (
                               <div className="flex items-center gap-2">
                                 <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
                                 Thời gian xử lý đơn hàng đang ở mức tốt
@@ -483,25 +477,25 @@ export default function Dashboard() {
                             <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                               <p className="text-sm font-medium text-gray-600">Tổng yêu cầu</p>
                               <p className="text-2xl font-bold text-gray-900">
-                                {dashboardData.refund_stats.total_requests}
+                                {dashboardData?.refund_stats?.total_requests}
                               </p>
                             </div>
                             <div className="space-y-2 p-3 bg-green-50 rounded-lg border border-green-100">
                               <p className="text-sm font-medium text-green-700">Đã duyệt</p>
                               <p className="text-2xl font-bold text-green-600">
-                                {dashboardData.refund_stats.approved_requests}
+                                {dashboardData?.refund_stats?.approved_requests}
                               </p>
                             </div>
                             <div className="space-y-2 p-3 bg-red-50 rounded-lg border border-red-100">
                               <p className="text-sm font-medium text-red-700">Từ chối</p>
                               <p className="text-2xl font-bold text-red-600">
-                                {dashboardData.refund_stats.rejected_requests}
+                                {dashboardData?.refund_stats?.rejected_requests}
                               </p>
                             </div>
                             <div className="space-y-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
                               <p className="text-sm font-medium text-blue-700">Tổng tiền hoàn</p>
                               <p className="text-2xl font-bold text-blue-600">
-                                {formatCurrency(dashboardData.refund_stats.total_refunded_amount)}
+                                {formatCurrency(dashboardData?.refund_stats?.total_refunded_amount)}
                               </p>
                             </div>
                           </div>
@@ -511,7 +505,7 @@ export default function Dashboard() {
                               <div
                                 className="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full"
                                 style={{
-                                  width: `${(dashboardData.refund_stats.approved_requests / dashboardData.refund_stats.total_requests) * 100}%`,
+                                  width: `${(dashboardData?.refund_stats?.approved_requests / dashboardData?.refund_stats?.total_requests) * 100}%`,
                                 }}
                               ></div>
                             </div>
