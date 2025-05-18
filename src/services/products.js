@@ -1,9 +1,17 @@
 import instance from './instance'; // Import instance axios
 
 // Lấy danh sách tất cả sản phẩm
-const getAllProducts = async () => {
+const getAllProducts = async (filters = {}) => {
     try {
-        const response = await instance.get('/products'); // GET request lấy danh sách sản phẩm
+        // Construct query parameters from filters
+        const queryParams = new URLSearchParams();
+        if (filters.name) queryParams.append('name', filters.name);
+        if (filters.category_id) queryParams.append('category_id', filters.category_id);
+        
+        const queryString = queryParams.toString();
+        const url = `/products${queryString ? `?${queryString}` : ''}`;
+        
+        const response = await instance.get(url); // GET request lấy danh sách sản phẩm
         return response.data; // Trả về danh sách sản phẩm
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -160,6 +168,17 @@ const deleteProductVariant = async (id) => {
         throw error;
     }
 };
+
+const deleteProduct = async (id) => {
+    try {
+        const response = await instance.delete(`/products/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        throw error;
+    }
+};
+
 export default {
     getAllProducts,
     createProduct,
@@ -174,5 +193,6 @@ export default {
     createProductVariant,
     updateProductVariant,
     getProductVariants,
-    deleteProductVariant
+    deleteProductVariant,
+    deleteProduct
 };
