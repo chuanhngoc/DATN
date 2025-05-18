@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Edit2, Trash2, Plus, Eye, X } from 'lucide-react';
+import { Edit2, Trash2, Plus, Eye, X, Filter, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState } from 'react';
 import couponService from '../../../services/coupons';
@@ -105,10 +105,41 @@ const CouponDetailModal = ({ coupon, onClose }) => {
 const Coupons = () => {
     const queryClient = useQueryClient();
     const [selectedCoupon, setSelectedCoupon] = useState(null);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        is_active: '',
+        type: '',
+        code: ''
+    });
+
+    // Handle filter change
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        
+        // Convert is_active to boolean if needed
+        let convertedValue = value;
+        if (name === 'is_active' && (value === '1' || value === '0')) {
+            convertedValue = value === '1' ? true : false;
+        }
+        
+        setFilters(prev => ({
+            ...prev,
+            [name]: convertedValue
+        }));
+    };
+
+    // Clear filters
+    const clearFilters = () => {
+        setFilters({
+            is_active: '',
+            type: '',
+            code: ''
+        });
+    };
 
     const { data: coupons = [], isLoading, error } = useQuery({
-        queryKey: ['coupons'],
-        queryFn: couponService.getAll
+        queryKey: ['coupons', filters],
+        queryFn: () => couponService.getAll(filters)
     });
 
     const deleteMutation = useMutation({
@@ -153,14 +184,86 @@ const Coupons = () => {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Quản lý mã giảm giá</h1>
-                <Link
-                    to="/admin/coupons/add"
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
-                >
-                    <Plus size={20} />
-                    Thêm mã giảm giá
-                </Link>
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
+                    >
+                        <Filter size={20} />
+                        {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+                    </button>
+                    <Link
+                        to="/admin/coupons/add"
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+                    >
+                        <Plus size={20} />
+                        Thêm mã giảm giá
+                    </Link>
+                </div>
             </div>
+
+            {/* Filter Section */}
+            {showFilters && (
+                <div className="bg-white p-4 rounded-lg shadow mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Trạng thái
+                            </label>
+                            <select
+                                name="is_active"
+                                value={filters.is_active === true ? '1' : filters.is_active === false ? '0' : ''}
+                                onChange={handleFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="1">Đang hoạt động</option>
+                                <option value="0">Không hoạt động</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Loại voucher
+                            </label>
+                            <select
+                                name="type"
+                                value={filters.type}
+                                onChange={handleFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Tất cả loại</option>
+                                <option value="percent">Phần trăm</option>
+                                <option value="fixed">Số tiền cố định</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Mã voucher
+                            </label>
+                            <input
+                                type="text"
+                                name="code"
+                                value={filters.code}
+                                onChange={handleFilterChange}
+                                placeholder="Nhập mã voucher"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="flex justify-end mt-4">
+                        <button
+                            onClick={clearFilters}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                        >
+                            <X size={18} />
+                            Xóa bộ lọc
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <table className="min-w-full">
@@ -176,47 +279,55 @@ const Coupons = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {coupons?.map((coupon) => (
-                            <tr key={coupon.code} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.code}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.type === 'percent' ? 'Phần trăm' : 'Số tiền cố định'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {coupon.type === 'percent' ? `${coupon.discount_percent}%` : `${coupon.amount?.toLocaleString()}đ`}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {new Date(coupon.start_date).toLocaleDateString()} - {new Date(coupon.expiry_date).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 text-xs rounded-full ${coupon.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {coupon.is_active ? 'Đang hoạt động' : 'Đã hết hạn'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex justify-end gap-2">
-                                        <button
-                                            onClick={() => setSelectedCoupon(coupon)}
-                                            className="text-green-600 hover:text-green-900 transition-colors"
-                                        >
-                                            <Eye size={20} />
-                                        </button>
-                                        <Link
-                                            to={`/admin/coupons/edit/${coupon.id}`}
-                                            className="text-blue-600 hover:text-blue-900 transition-colors"
-                                        >
-                                            <Edit2 size={20} />
-                                        </Link>
-                                        <button
-                                            onClick={() => handleDelete(coupon.id)}
-                                            className="text-red-600 hover:text-red-900 transition-colors"
-                                            disabled={deleteMutation.isPending}
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
+                        {coupons?.length > 0 ? (
+                            coupons.map((coupon) => (
+                                <tr key={coupon.code} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.code}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.type === 'percent' ? 'Phần trăm' : 'Số tiền cố định'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {coupon.type === 'percent' ? `${coupon.discount_percent}%` : `${coupon.amount?.toLocaleString()}đ`}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {new Date(coupon.start_date).toLocaleDateString()} - {new Date(coupon.expiry_date).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 py-1 text-xs rounded-full ${coupon.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {coupon.is_active ? 'Đang hoạt động' : 'Không hoạt động'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => setSelectedCoupon(coupon)}
+                                                className="text-green-600 hover:text-green-900 transition-colors"
+                                            >
+                                                <Eye size={20} />
+                                            </button>
+                                            <Link
+                                                to={`/admin/coupons/edit/${coupon.id}`}
+                                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                                            >
+                                                <Edit2 size={20} />
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDelete(coupon.id)}
+                                                className="text-red-600 hover:text-red-900 transition-colors"
+                                                disabled={deleteMutation.isPending}
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                                    Không tìm thấy mã giảm giá nào
                                 </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>

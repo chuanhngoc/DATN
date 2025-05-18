@@ -15,22 +15,22 @@ export const instanceLocal = axios.create({
   baseURL: urlLocal, // URL của API server
   timeout: 10000, // Timeout sau 10 giây
   headers: {
-      'Content-Type': 'application/json',
+    'Content-Type': 'application/json',
   },
 });
 
-// instance.interceptors.request.use(
-//   (config) => {
-//     const token = localStorage.getItem('token');
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+instance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${JSON.parse(token).access_token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 
 

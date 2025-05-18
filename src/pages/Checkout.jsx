@@ -5,12 +5,14 @@ import { profile } from '../services/client/user';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getCheckoutData } from '../services/client/cart';
 import { checkout } from '../services/client/checkout';
+import couponService from '../services/coupons';
 
 const CheckoutPage = () => {
     const location = useLocation();
     //lấy ra thằng state variant
     const selectedItems = location.state?.selectedItems;
     const [cartData, setCartData] = useState([]);
+    const [appliedVoucher, setAppliedVoucher] = useState(null);
     const nav = useNavigate()
     const getCart = useMutation({
         mutationFn: async () => {
@@ -43,11 +45,34 @@ const CheckoutPage = () => {
         }
     });
 
+    const applyVoucherMutation = useMutation({
+        mutationFn: async (voucherData) => {
+            return await couponService.applyVoucher(voucherData);
+        },
+        onSuccess: (data) => {
+            setAppliedVoucher(data);
+            toast.success(data.message || 'Áp dụng mã giảm giá thành công');
+        },
+        onError: (error) => {
+            setAppliedVoucher(null);
+            toast.error(error.response?.data?.message || 'Không thể áp dụng mã giảm giá');
+        }
+    });
+
     const { data: userInfo, isLoading: isLoadingUser } = useQuery({
         queryKey: ["profile"],
         queryFn: async () => {
             return await profile()
         },
+    });
+
+    const { data: voucher, isLoading: isLoadingVoucher } = useQuery({
+        queryKey: ["voucher"],
+        queryFn: async () => {
+            const total = calculateTotal();
+            return await couponService.getVoucher(Math.max(0, total - 30000));
+        },
+        enabled: !!selectedItems && !!cartData?.items?.length
     });
 
     const [formData, setFormData] = useState({
@@ -56,7 +81,8 @@ const CheckoutPage = () => {
         shipping_email: '',
         shipping_address: '',
         payment_method: 'cod',
-        note: ''
+        note: '',
+        voucher: ''
     });
 
     // Pre-fill form with user data when available
@@ -102,6 +128,15 @@ const CheckoutPage = () => {
         return calculateSubtotal() + shippingFee;
     };
 
+    // Tính tổng tiền sau khi áp dụng voucher
+    const calculateFinalTotal = () => {
+        if (appliedVoucher && appliedVoucher.final_total) {
+            return appliedVoucher.final_total;
+        }
+        
+        return calculateTotal();
+    };
+
     // Redirect if no items were selected
     if (!selectedItems || selectedItems.length === 0) {
         return <Navigate to="/cart" replace />;
@@ -113,8 +148,19 @@ const CheckoutPage = () => {
             ...prev,
             [name]: value
         }));
-    };
 
+        // Khi thay đổi voucher, gọi API áp dụng voucher
+        if (name === 'voucher' && value) {
+            applyVoucherMutation.mutate({
+                voucher_code: value,
+                total_amount: calculateSubtotal(),
+                
+            });
+        } else if (name === 'voucher' && !value) {
+            // Nếu xóa voucher
+            setAppliedVoucher(null);
+        }
+    };
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -147,11 +193,9 @@ const CheckoutPage = () => {
             // Prepare order data
             const orderData = {
                 cart_item_ids: selectedItems.map(item => item.cartItemId),
-                ...formData
+                ...formData,
+                discount_amount: appliedVoucher?.discount || 0
             };
-
-            // TODO: Call your API to create order
-            console.log('Order Data:', orderData);
 
             checkoutCart.mutate(orderData)
 
@@ -311,6 +355,28 @@ const CheckoutPage = () => {
                             </div>
                         </div>
 
+                        {/* Mã giảm giá */}
+                        <div className="mb-6">
+                            <label htmlFor="voucher" className="block text-sm font-medium text-gray-700 mb-1">
+                                Mã giảm giá
+                            </label>
+                            <select
+                                id="voucher"
+                                name="voucher"
+                                value={formData.voucher}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value="">-- Chọn mã giảm giá --</option>
+                                {voucher?.map((item) => (
+                                    <option key={item.id} value={item.code}>
+                                        {item.name} - {item.type === 'percent' ? `${item.discount_percent}%` : `${item.amount}đ`}
+                                        {item.type === 'percent' && item.max_discount_amount ? ` (tối đa ${new Intl.NumberFormat('vi-VN').format(item.max_discount_amount)}đ)` : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         {/* Submit button */}
                         <button
                             type="submit"
@@ -370,10 +436,58 @@ const CheckoutPage = () => {
                             <span>Phí vận chuyển:</span>
                             <span>{formatPrice(shippingFee)}</span>
                         </div>
+                        {appliedVoucher ? (
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Giảm giá:</span>
+                                <span className="text-red-500">
+                                    - {formatPrice(appliedVoucher.discount)}
+                                </span>
+                            </div>
+                        ) : (
+                            formData.voucher && voucher?.length > 0 && (
+                                <div className="flex justify-between text-sm text-gray-600">
+                                    <span>Giảm giá:</span>
+                                    <span className="text-red-500">
+                                        {(() => {
+                                            const selectedVoucher = voucher.find(v => v.code === formData.voucher);
+                                            if (!selectedVoucher) return formatPrice(0);
+                                            
+                                            if (selectedVoucher.type === 'percent') {
+                                                const discountAmount = (calculateSubtotal() * selectedVoucher.discount_percent) / 100;
+                                                const maxDiscount = selectedVoucher.max_discount_amount || Infinity;
+                                                return `- ${formatPrice(Math.min(discountAmount, maxDiscount))}`;
+                                            } else {
+                                                return `- ${formatPrice(selectedVoucher.amount)}`;
+                                            }
+                                        })()}
+                                    </span>
+                                </div>
+                            )
+                        )}
                         <div className="pt-4 border-t">
                             <div className="flex justify-between items-center text-lg font-semibold">
                                 <span>Tổng cộng:</span>
-                                <span className="text-blue-600">{formatPrice(calculateTotal())}</span>
+                                <span className="text-blue-600">
+                                    {appliedVoucher ? 
+                                        formatPrice(appliedVoucher.final_total + shippingFee) :
+                                        (() => {
+                                            let total = calculateSubtotal();
+                                            if (formData.voucher && voucher?.length > 0) {
+                                                const selectedVoucher = voucher.find(v => v.code === formData.voucher);
+                                                if (selectedVoucher) {
+                                                    if (selectedVoucher.type === 'percent') {
+                                                        const discountAmount = (total * selectedVoucher.discount_percent) / 100;
+                                                        const maxDiscount = selectedVoucher.max_discount_amount || Infinity;
+                                                        total -= Math.min(discountAmount, maxDiscount);
+                                                    } else if (selectedVoucher.amount) {
+                                                        total -= selectedVoucher.amount;
+                                                    }
+                                                }
+                                            }
+                                            return formatPrice(Math.max(0, total) + shippingFee);
+                                        })()
+                                    }
+                                </span>
                             </div>
                             <p className="text-sm text-gray-500 mt-2">
                                 (Đã bao gồm VAT nếu có)

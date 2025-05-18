@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, MessageSquare, EyeOff, X } from 'lucide-react';
+import { Eye, MessageSquare, EyeOff, X, Filter, Search, Trash } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState } from 'react';
 import reviewsService from '../../../services/reviews';
@@ -222,11 +222,58 @@ const ReviewDetailModal = ({ review, onClose, onReply, onBlock }) => {
 const Reviews = () => {
     const queryClient = useQueryClient();
     const [selectedReviewForView, setSelectedReviewForView] = useState(null);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        has_reply: '',
+        is_active: '',
+        rating: '',
+        page: 1
+    });
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Update filters function
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        
+        // Convert string values to appropriate types
+        let convertedValue = value;
+        if ((name === 'has_reply' || name === 'is_active') && (value === '1' || value === '0')) {
+            convertedValue = value === '1' ? true : false;
+        } else if (name === 'rating' && value !== '') {
+            convertedValue = parseInt(value);
+        }
+        
+        setFilters(prev => ({ 
+            ...prev, 
+            [name]: convertedValue
+        }));
+    };
+
+    // Clear filters
+    const clearFilters = () => {
+        setFilters({
+            has_reply: '',
+            is_active: '',
+            rating: '',
+            page: currentPage
+        });
+    };
+
+    // Apply filters
+    const applyFilters = () => {
+        // Already handled by React Query dependency array
+    };
 
     const { data: reviewsData, isLoading, error } = useQuery({
-        queryKey: ['reviews'],
-        queryFn: () => reviewsService.getAll()
+        queryKey: ['reviews', { ...filters, page: currentPage }],
+        queryFn: () => reviewsService.getAll({ ...filters, page: currentPage })
     });
+
+    // Handle pagination
+    const handlePageChange = (newPage) => {
+        if (newPage < 1 || (reviewsData && newPage > reviewsData.meta.last_page)) return;
+        setCurrentPage(newPage);
+    };
 
     const replyMutation = useMutation({
         mutationFn: ({ id, reply }) => reviewsService.reply(id, { reply }),
@@ -283,7 +330,84 @@ const Reviews = () => {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Quản lý đánh giá</h1>
+                <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
+                >
+                    <Filter size={20} />
+                    {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+                </button>
             </div>
+
+            {/* Filter Section */}
+            {showFilters && (
+                <div className="bg-white p-4 rounded-lg shadow mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Trạng thái phản hồi
+                            </label>
+                            <select
+                                name="has_reply"
+                                value={filters.has_reply === true ? '1' : filters.has_reply === false ? '0' : ''}
+                                onChange={handleFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Tất cả</option>
+                                <option value="1">Đã phản hồi</option>
+                                <option value="0">Chưa phản hồi</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Trạng thái hiển thị
+                            </label>
+                            <select
+                                name="is_active"
+                                value={filters.is_active === true ? '1' : filters.is_active === false ? '0' : ''}
+                                onChange={handleFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Tất cả</option>
+                                <option value="1">Đang hiển thị</option>
+                                <option value="0">Đã ẩn</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Đánh giá sao
+                            </label>
+                            <select
+                                name="rating"
+                                value={filters.rating}
+                                onChange={handleFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Tất cả</option>
+                                <option value="5">5 sao</option>
+                                <option value="4">4 sao</option>
+                                <option value="3">3 sao</option>
+                                <option value="2">2 sao</option>
+                                <option value="1">1 sao</option>
+                            </select>
+                        </div>
+                        
+                        <div className="flex items-end">
+                            <button
+                                onClick={clearFilters}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 mr-2"
+                            >
+                                <Trash size={18} />
+                                Xóa bộ lọc
+                            </button>
+                            
+                         
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <table className="min-w-full">
@@ -294,6 +418,7 @@ const Reviews = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nội dung</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thời gian</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phản hồi</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                         </tr>
                     </thead>
@@ -337,6 +462,13 @@ const Reviews = () => {
                                         {review.is_active ? 'Đang hiển thị' : 'Đã ẩn'}
                                     </span>
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {review.reply ? (
+                                        <span className="text-green-600">Đã phản hồi</span>
+                                    ) : (
+                                        <span className="text-orange-500">Chưa phản hồi</span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex justify-end gap-2">
                                         <button
@@ -349,9 +481,80 @@ const Reviews = () => {
                                 </td>
                             </tr>
                         ))}
+
+                        {(!reviewsData?.data || reviewsData.data.length === 0) && (
+                            <tr>
+                                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                                    Không tìm thấy đánh giá nào phù hợp
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination */}
+            {reviewsData?.meta && (
+                <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-700">
+                        Hiển thị <span className="font-medium">{reviewsData.meta.from || 0}</span> đến <span className="font-medium">{reviewsData.meta.to || 0}</span> của <span className="font-medium">{reviewsData.meta.total}</span> kết quả
+                    </div>
+                    <div className="flex space-x-2">
+                        <button 
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={`px-3 py-1 border border-gray-300 rounded-md text-sm font-medium ${
+                                currentPage === 1 
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                    : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
+                            Trước
+                        </button>
+                        {Array.from({ length: reviewsData.meta.last_page }, (_, i) => i + 1)
+                            .filter(page => {
+                                // Show first page, last page, current page, and pages around current page
+                                return (
+                                    page === 1 || 
+                                    page === reviewsData.meta.last_page || 
+                                    Math.abs(page - currentPage) <= 1
+                                );
+                            })
+                            .map((page, index, array) => {
+                                // Add ellipsis between non-consecutive pages
+                                const showEllipsisBefore = index > 0 && array[index - 1] !== page - 1;
+                                return (
+                                    <span key={page}>
+                                        {showEllipsisBefore && (
+                                            <span className="px-3 py-1 text-gray-500">...</span>
+                                        )}
+                                        <button
+                                            onClick={() => handlePageChange(page)}
+                                            className={`px-3 py-1 border rounded-md text-sm font-medium ${
+                                                currentPage === page 
+                                                    ? 'bg-blue-500 text-white border-blue-500' 
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    </span>
+                                );
+                            })}
+                        <button 
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={reviewsData.meta.current_page === reviewsData.meta.last_page}
+                            className={`px-3 py-1 border border-gray-300 rounded-md text-sm font-medium ${
+                                currentPage === reviewsData.meta.last_page 
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                    : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
+                            Sau
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modal xem chi tiết */}
             {selectedReviewForView && (
