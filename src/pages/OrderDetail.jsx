@@ -207,6 +207,9 @@ const OrderDetail = () => {
     const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
     const [selectedReview, setSelectedReview] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
+    const [bankName, setBankName] = useState('');
+    const [bankAccountName, setBankAccountName] = useState('');
+    const [bankAccountNumber, setBankAccountNumber] = useState('');
 
     // State cho form hoàn tiền
     const [refundData, setRefundData] = useState({
@@ -221,11 +224,6 @@ const OrderDetail = () => {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
 
-    // State for bank information
-    const [bankName, setBankName] = useState('');
-    const [bankAccountName, setBankAccountName] = useState('');
-    const [bankAccountNumber, setBankAccountNumber] = useState('');
-
     // Query lấy thông tin chi tiết đơn hàng
     const { data: orderDetail, isLoading, error } = useQuery({
         queryKey: ['order-detail', id],
@@ -237,7 +235,7 @@ const OrderDetail = () => {
 
     // Mutation hủy đơn hàng
     const cancelOrderMutation = useMutation({
-        mutationFn: async (data) => await cancelOrder(id, data.cancel_reason),
+        mutationFn: async (data) => await cancelOrder(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['order-detail', id]);
             toast.success('Đơn hàng đã được hủy thành công');
@@ -305,7 +303,18 @@ const OrderDetail = () => {
             toast.error('Vui lòng nhập lý do hủy đơn hàng');
             return;
         }
-        await cancelOrderMutation.mutate({ cancel_reason: cancelReason });
+        if (orderDetail?.payment_status?.id === 2) {
+            if (!bankName.trim() || !bankAccountName.trim() || !bankAccountNumber.trim()) {
+                toast.error('Vui lòng nhập đầy đủ thông tin ngân hàng');
+                return;
+            }
+        }
+        await cancelOrderMutation.mutate({ 
+            cancel_reason: cancelReason,
+            bank_name: bankName,
+            bank_account_name: bankAccountName,
+            bank_account_number: bankAccountNumber
+        });
     };
 
     // Xử lý thanh toán lại
@@ -439,15 +448,11 @@ const OrderDetail = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between text-gray-600">
                                 <span>Tạm tính</span>
-                                <span>{formatPrice(orderDetail?.total_amount)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span>Giảm giá</span>
-                                <span>- {formatPrice(orderDetail?.discount_amount)}</span>
+                                <span>{formatPrice(orderDetail?.total_amount - orderDetail?.shipping)}</span>
                             </div>
                             <div className="flex justify-between text-gray-600">
                                 <span>Phí vận chuyển</span>
-                                <span>+ {formatPrice(orderDetail?.shipping)}</span>
+                                <span>{formatPrice(orderDetail?.shipping)}</span>
                             </div>
                             <div className="border-t pt-3 mt-3">
                                 <div className="flex justify-between items-center text-lg font-semibold">
@@ -650,12 +655,61 @@ const OrderDetail = () => {
                                     required
                                 ></textarea>
                             </div>
+                            {orderDetail?.payment_status?.id === 2 && (
+                                <>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 text-sm font-medium mb-2">
+                                            Tên ngân hàng
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={bankName}
+                                            onChange={(e) => setBankName(e.target.value)}
+                                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Nhập tên ngân hàng..."
+                                            maxLength={100}
+                                            required={orderDetail?.payment_status?.id === 2}
+                                        />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 text-sm font-medium mb-2">
+                                            Tên chủ tài khoản
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={bankAccountName}
+                                            onChange={(e) => setBankAccountName(e.target.value)}
+                                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Nhập tên chủ tài khoản..."
+                                            maxLength={100}
+                                            required={orderDetail?.payment_status?.id === 2}
+                                        />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 text-sm font-medium mb-2">
+                                            Số tài khoản
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={bankAccountNumber}
+                                            onChange={(e) => setBankAccountNumber(e.target.value)}
+                                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Nhập số tài khoản..."
+                                            maxLength={50}
+                                            required={orderDetail?.payment_status?.id === 2}
+                                        />
+                                    </div>
+                                </>
+                            )}
                             <div className="flex justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setShowCancelModal(false);
                                         setCancelReason('');
+                                        setBankName('');
+                                        setBankAccountName('');
+                                        setBankAccountNumber('');
                                     }}
                                     className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
                                 >
@@ -839,7 +893,7 @@ const OrderDetail = () => {
                                 ×
                             </button>
                         </div>
-
+                        
                         <div className="space-y-4">
                             {/* Rating */}
                             <div>

@@ -32,11 +32,9 @@ export const getOrderDetail = async (orderId) => {
 
 
 // Cancel order with reason
-export const cancelOrder = async (orderId, cancelReason) => {
+export const cancelOrder = async (orderId, data) => {
     try {
-        const response = await instanceLocal.post(`/orders/${orderId}/cancel`, {
-            cancel_reason: cancelReason
-        }, {
+        const response = await instanceLocal.post(`/orders/${orderId}/cancel`, data, {
             headers: getAuthHeaders(),
         });
         return response.data;
