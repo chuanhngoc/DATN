@@ -221,6 +221,11 @@ const OrderDetail = () => {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
 
+    // State for bank information
+    const [bankName, setBankName] = useState('');
+    const [bankAccountName, setBankAccountName] = useState('');
+    const [bankAccountNumber, setBankAccountNumber] = useState('');
+
     // Query lấy thông tin chi tiết đơn hàng
     const { data: orderDetail, isLoading, error } = useQuery({
         queryKey: ['order-detail', id],
@@ -434,11 +439,15 @@ const OrderDetail = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between text-gray-600">
                                 <span>Tạm tính</span>
-                                <span>{formatPrice(orderDetail?.total_amount - orderDetail?.shipping)}</span>
+                                <span>{formatPrice(orderDetail?.total_amount)}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-600">
+                                <span>Giảm giá</span>
+                                <span>- {formatPrice(orderDetail?.discount_amount)}</span>
                             </div>
                             <div className="flex justify-between text-gray-600">
                                 <span>Phí vận chuyển</span>
-                                <span>{formatPrice(orderDetail?.shipping)}</span>
+                                <span>+ {formatPrice(orderDetail?.shipping)}</span>
                             </div>
                             <div className="border-t pt-3 mt-3">
                                 <div className="flex justify-between items-center text-lg font-semibold">
@@ -830,7 +839,7 @@ const OrderDetail = () => {
                                 ×
                             </button>
                         </div>
-                        
+
                         <div className="space-y-4">
                             {/* Rating */}
                             <div>

@@ -194,8 +194,10 @@ const CheckoutPage = () => {
             const orderData = {
                 cart_item_ids: selectedItems.map(item => item.cartItemId),
                 ...formData,
+                voucher_code: formData.voucher || undefined,
                 discount_amount: appliedVoucher?.discount || 0
             };
+            delete orderData.voucher;
 
             checkoutCart.mutate(orderData)
 

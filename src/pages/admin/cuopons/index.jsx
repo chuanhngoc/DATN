@@ -234,7 +234,7 @@ const Coupons = () => {
                             >
                                 <option value="">Tất cả loại</option>
                                 <option value="percent">Phần trăm</option>
-                                <option value="fixed">Số tiền cố định</option>
+                                <option value="amount">Số tiền cố định</option>
                             </select>
                         </div>
                         
