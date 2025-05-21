@@ -454,18 +454,22 @@ const OrderDetailAdmin = () => {
 						<div className="space-y-3">
 							<div className="flex justify-between text-sm">
 								<span className="text-gray-600">Tạm tính</span>
-								<span className="font-medium">{formatPrice(order?.amounts?.total)}</span>
+								<span className="font-medium">{formatPrice(order?.total_amount)}</span>
+							</div>
+							<div className="flex justify-between text-sm">
+								<span className="text-gray-600">Giảm giá</span>
+								<span className="font-medium">-{formatPrice(order?.discount_amount || 0)}</span>
 							</div>
 							<div className="flex justify-between text-sm">
 								<span className="text-gray-600">Phí vận chuyển</span>
-								<span className="font-medium">{formatPrice(order?.shipping)}</span>
+								<span className="font-medium">+{formatPrice(order?.shipping)}</span>
 							</div>
 							<div className="border-t pt-3">
 								<div className="flex justify-between">
 									<span className="font-medium">Tổng cộng</span>
 									<div className="text-right">
 										<div className="text-lg font-bold text-blue-600">
-											{formatPrice(Number(order?.amounts?.final || 0))}
+											{formatPrice(Number(order?.final_amount || 0))}
 										</div>
 									</div>
 								</div>
@@ -481,8 +485,8 @@ const OrderDetailAdmin = () => {
 							<Clock className="text-gray-500" size={20} />
 							Lịch sử đơn hàng
 						</h2>
-					<div className="space-y-4">
-							{[...order?.histories]?.reverse()?.map((history) => (
+						<div className="space-y-4">
+							{order?.histories?.map((history) => (
 								<div key={history.id} className="flex gap-4 pb-4 border-b last:border-0">
 									<div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
 									<div>
@@ -491,10 +495,10 @@ const OrderDetailAdmin = () => {
 											Người thay đổi: {
 												history.user_change === 'system'
 													? 'Hệ Thống'
-													: history.user_change.charAt(0).toUpperCase() + history.user_change.slice(1)
+													: history.user_change
 											}
 										</div>
-										<div className="text-xs text-gray-500">{(history.created_at)}</div>
+										<div className="text-xs text-gray-500">{history.created_at}</div>
 									</div>
 								</div>
 							))}
@@ -744,7 +748,9 @@ const OrderDetailAdmin = () => {
 										<div>
 											<div className="text-sm text-gray-600">Loại hoàn tiền</div>
 											<div className="font-medium">
-												{order.refund.type === 'return_after_received' ? 'Hoàn tiền sau khi nhận hàng' : 'Hoàn tiền trước khi nhận hàng'}
+												{order.refund.type === 'cancel_before_shipping' ? 'Hoàn tiền trước khi giao hàng' : 
+												 order.refund.type === 'return_after_received' ? 'Hoàn tiền sau khi nhận hàng' : 
+												 'Hoàn tiền trước khi nhận hàng'}
 											</div>
 										</div>
 										<div>
@@ -753,16 +759,15 @@ const OrderDetailAdmin = () => {
 										</div>
 										<div>
 											<div className="text-sm text-gray-600">Trạng thái</div>
-											<div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-												order.refund.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-												order.refund.status === 'approved' ? 'bg-green-100 text-green-800' :
-												order.refund.status === 'rejected' ? 'bg-red-100 text-red-800' :
-												'bg-blue-100 text-blue-800'
-											}`}>
+											<div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${order.refund.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+													order.refund.status === 'approved' ? 'bg-green-100 text-green-800' :
+														order.refund.status === 'rejected' ? 'bg-red-100 text-red-800' :
+															'bg-blue-100 text-blue-800'
+												}`}>
 												{order.refund.status === 'pending' ? 'Đang chờ xử lý' :
-												order.refund.status === 'approved' ? 'Đã phê duyệt' :
-												order.refund.status === 'rejected' ? 'Đã từ chối' :
-												'Đã hoàn tiền'}
+													order.refund.status === 'approved' ? 'Đã phê duyệt' :
+														order.refund.status === 'rejected' ? 'Đã từ chối' :
+															'Đã hoàn tiền'}
 											</div>
 										</div>
 										<div>
@@ -806,7 +811,7 @@ const OrderDetailAdmin = () => {
 										{order.refund.images?.map((image, index) => (
 											<div key={index} className="relative aspect-square">
 												<img
-													src={`${import.meta.env.VITE_API_URL}/${image}`}
+													src={`${image}`}
 													alt={`Refund image ${index + 1}`}
 													className="w-full h-full object-cover rounded-lg"
 												/>
@@ -824,18 +829,27 @@ const OrderDetailAdmin = () => {
 									</div>
 								)}
 
-								{order.refund.refund_proof_image && (
+								{order.refund.proof_image_url && (
 									<div className="bg-gray-50 p-4 rounded-lg">
 										<h3 className="text-lg font-medium mb-4">Ảnh chứng minh hoàn tiền</h3>
 										<div className="relative aspect-video">
 											<img
-												src={`${import.meta.env.VITE_API_URL}/${order.refund.refund_proof_image}`}
+												src={order.refund.proof_image_url}
 												alt="Refund proof"
 												className="w-full h-full object-cover rounded-lg"
 											/>
 										</div>
 									</div>
 								)}
+
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Thời gian phê duyệt</div>
+									<div className="text-sm font-medium">{order?.refund?.approved_at}</div>
+								</div>
+								<div>
+									<div className="text-sm text-gray-600 mb-1">Thời gian hoàn tiền</div>
+									<div className="text-sm font-medium">{order?.refund?.refunded_at}</div>
+								</div>
 							</div>
 						</div>
 

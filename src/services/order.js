@@ -103,7 +103,9 @@ export const changeOrderStatus = async (orderId, newStatusId, cancelReason = '')
 // Admin: Approve refund
 export const approveRefund = async (refundId) => {
     try {
-        const response = await instanceLocal.post(`/admin/orders/refunds/${refundId}/approve`);
+        const response = await instanceLocal.post(`/admin/orders/refunds/${refundId}/approve`, null, {
+            headers: getAuthHeaders()
+        });
         return response.data;
     } catch (error) {
         throw error.response?.data?.message || 'Có lỗi xảy ra';
@@ -115,6 +117,8 @@ export const rejectRefund = async (refundId, rejectReason) => {
     try {
         const response = await instanceLocal.post(`/admin/orders/refunds/${refundId}/reject`, {
             reject_reason: rejectReason
+        }, {
+            headers: getAuthHeaders()
         });
         return response.data;
     } catch (error) {
@@ -130,7 +134,8 @@ export const markRefundAsRefunded = async (refundId, refundProofImage) => {
 
         const response = await instanceLocal.post(`/admin/orders/refunds/${refundId}/refunded`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'multipart/form-data',
+                ...getAuthHeaders()
             }
         });
         return response.data;
