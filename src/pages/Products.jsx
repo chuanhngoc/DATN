@@ -37,12 +37,20 @@ const ProductAll = () => {
                                     <div className="space-y-1">
                                         {product.variation_min_price && (
                                             <>
-                                                <p className="text-lg font-bold text-red-600">
-                                                    {Number(product.variation_min_price.sale_price).toLocaleString('vi-VN')}đ
-                                                </p>
-                                                <p className="text-sm text-gray-500 line-through">
-                                                    {Number(product.variation_min_price.price).toLocaleString('vi-VN')}đ
-                                                </p>
+                                                {product.variation_min_price.sale_price > 0 ? (
+                                                    <>
+                                                        <p className="text-lg font-bold text-red-600">
+                                                            {Number(product.variation_min_price.sale_price).toLocaleString('vi-VN')}đ
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 line-through">
+                                                            {Number(product.variation_min_price.price).toLocaleString('vi-VN')}đ
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-lg font-bold text-red-600">
+                                                        {Number(product.variation_min_price.price).toLocaleString('vi-VN')}đ
+                                                    </p>
+                                                )}
                                             </>
                                         )}
                                     </div>
