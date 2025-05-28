@@ -1,4 +1,4 @@
-import instance from './instance';
+import instance, { instanceLocal } from './instance';
 
 const reviewsService = {
     // Get all reviews with pagination and filters
@@ -51,6 +51,16 @@ const reviewsService = {
     block: async (id, data) => {
         try {
             const response = await instance.post(`/reviews/${id}/block`, data);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data?.message || 'Có lỗi xảy ra';
+        }
+    },
+
+
+    getReviewProductDetail:async (id)=>{
+        try {
+            const response = await instanceLocal.get(`products/${id}/reviews`);
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || 'Có lỗi xảy ra';

@@ -1,12 +1,17 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, Tag, Users, LogOut, Palette, Ruler, MessageSquare, Ticket } from 'lucide-react';
 
 const AdminLayout = () => {
   const location = useLocation();
-
+  const navigate = useNavigate()
   // Kiểm tra path hiện tại để active menu
   const isActive = (path) => {
     return location.pathname === path ? 'bg-gray-700' : '';
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
   return (
@@ -98,7 +103,7 @@ const AdminLayout = () => {
             </h2>
             <div className="flex items-center">
               <span className="text-gray-600 mr-4">Admin</span>
-              <button className="text-gray-600 hover:text-gray-800">
+              <button className="text-gray-600 hover:text-gray-800 cursor-pointer" onClick={()=>handleLogout()}>
                 <LogOut className="w-6 h-6" />
               </button>
             </div>

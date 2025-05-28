@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { token_auth } from "../auth/getToken";
+import ReviewProductDetail from "../components/ReviewProductDetail";
 
 export const ProductDetail = () => {
     const { id } = useParams();
@@ -400,6 +401,8 @@ export const ProductDetail = () => {
                     </div>
                 </div>
             </div>
+
+            <ReviewProductDetail/>
         </div>
     );
 };
