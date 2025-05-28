@@ -486,7 +486,7 @@ const OrderDetail = () => {
                                     )}
 
                                 {/* Nút hủy đơn - chỉ hiện khi đơn hàng mới hoặc đã xác nhận */}
-                                {(orderDetail?.status?.id === 1 || orderDetail?.status?.id === 2) && (
+                                {(orderDetail?.status?.id === 1 ) && (
                                     <button
                                         onClick={() => setShowCancelModal(true)}
                                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md"

@@ -330,8 +330,7 @@ const AddProduct = () => {
                       onClick={addVariation}
                       className="flex items-center text-sm text-blue-600 hover:text-blue-700"
                     >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Thêm biến thể
+                     
                     </button>
                   </div>
 
