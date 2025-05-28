@@ -116,7 +116,8 @@ const CheckoutPage = () => {
     const calculateSubtotal = () => {
         if (!cartData?.items?.length) return 0;
         return cartData.items.reduce((total, item) => {
-            return total + (parseFloat(item.variation.sale_price) * item.quantity);
+            const price = item.variation.sale_price > 0 ? item.variation.sale_price : item.variation.price;
+            return total + (parseFloat(price) * item.quantity);
         }, 0);
     };
 
@@ -417,7 +418,16 @@ const CheckoutPage = () => {
                                     </div>
                                     <div className="flex justify-between items-center mt-2">
                                         <span className="text-blue-600 font-medium">
-                                            {formatPrice(item.variation.sale_price)}
+                                            {item.variation.sale_price > 0 ? (
+                                                <>
+                                                    <span className="line-through text-gray-500 mr-2">
+                                                        {formatPrice(item.variation.price)}
+                                                    </span>
+                                                    {formatPrice(item.variation.sale_price)}
+                                                </>
+                                            ) : (
+                                                formatPrice(item.variation.price)
+                                            )}
                                         </span>
                                         <span className="text-gray-500">
                                             x{item.quantity}

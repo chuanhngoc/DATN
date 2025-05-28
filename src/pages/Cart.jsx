@@ -102,7 +102,8 @@ const CartPage = () => {
         if (!cartData?.items?.length) return 0;
         return cartData.items.reduce((total, item) => {
             if (selectedItems.some(selected => selected.cartItemId === item.id)) {
-                return total + (parseFloat(item.variation.sale_price) * item.quantity);
+                const price = item.variation.sale_price > 0 ? item.variation.sale_price : item.variation.price;
+                return total + (parseFloat(price) * item.quantity);
             }
             return total;
         }, 0);
@@ -211,7 +212,16 @@ const CartPage = () => {
                                             <span>Size: {item.variation.size.name}</span>
                                         </div>
                                         <div className="mt-2 text-blue-600 font-medium">
-                                            {formatPrice(item.variation.sale_price)}
+                                            {item.variation.sale_price > 0 ? (
+                                                <>
+                                                    <span className="line-through text-gray-500 mr-2">
+                                                        {formatPrice(item.variation.price)}
+                                                    </span>
+                                                    {formatPrice(item.variation.sale_price)}
+                                                </>
+                                            ) : (
+                                                formatPrice(item.variation.price)
+                                            )}
                                         </div>
                                     </div>
 

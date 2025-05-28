@@ -351,16 +351,18 @@ export const ProductDetail = () => {
                                             {formatPrice(getSelectedVariation().price)}
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-lg text-gray-600">Giá khuyến mãi:</span>
-                                        <span className="text-xl font-bold text-blue-600">
-                                            {formatPrice(getSelectedVariation().sale_price)}
-                                        </span>
-                                    </div>
+                                    {getSelectedVariation().sale_price > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-lg text-gray-600">Giá khuyến mãi:</span>
+                                            <span className="text-xl font-bold text-blue-600">
+                                                {formatPrice(getSelectedVariation().sale_price)}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between pt-2">
                                         <span className="text-lg text-gray-600">Tổng tiền:</span>
                                         <span className="text-2xl font-bold text-blue-600">
-                                            {formatPrice(getSelectedVariation().sale_price * quantity)}
+                                            {formatPrice((getSelectedVariation().sale_price > 0 ? getSelectedVariation().sale_price : getSelectedVariation().price) * quantity)}
                                         </span>
                                     </div>
                                 </div>
