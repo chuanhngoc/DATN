@@ -1,8 +1,110 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getOrderDetail, cancelOrder, retryPayment, requestRefund, completeOrder, addOrderReview, updateOrderReview } from '../services/order';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
+
+const RefundRequestModal = ({ isOpen, onClose, refundRequestData, formatPrice }) => {
+    if (!isOpen || !refundRequestData) return null;
+
+    return (
+        <div className="fixed inset-0 bg-[#00000080] bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-2xl font-bold">Chi tiết yêu cầu hoàn tiền</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                    >
+                        &times;
+                    </button>
+                </div>
+
+                <div className="space-y-4 text-gray-700">
+                    {/* Thông tin cơ bản */}
+                    <div>
+                        <h3 className="font-semibold mb-1">Trạng thái hoàn tiền</h3>
+                        <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${refundRequestData.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            refundRequestData.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            refundRequestData.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                            }`}>
+                            {refundRequestData.status === 'pending' ? 'Đang chờ xử lý' :
+                                refundRequestData.status === 'approved' ? 'Đã phê duyệt' :
+                                refundRequestData.status === 'rejected' ? 'Đã từ chối' :
+                                'Đã hoàn tiền'}
+                        </span>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-1">Số tiền hoàn</h3>
+                        <p className="text-green-600 font-medium text-lg">{formatPrice(refundRequestData.amount)}</p>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-1">Lý do yêu cầu</h3>
+                        <p>{refundRequestData.reason}</p>
+                    </div>
+
+                    {/* Thông tin ngân hàng */}
+                    <div>
+                        <h3 className="font-semibold mb-1">Thông tin ngân hàng</h3>
+                        <div className="space-y-1 text-sm">
+                            <p><strong>Ngân hàng:</strong> {refundRequestData.bank_name}</p>
+                            <p><strong>Chủ tài khoản:</strong> {refundRequestData.bank_account_name}</p>
+                            <p><strong>Số tài khoản:</strong> {refundRequestData.bank_account_number}</p>
+                        </div>
+                    </div>
+
+                    {/* Hình ảnh đính kèm */}
+                    {refundRequestData.images && refundRequestData.images.length > 0 && (
+                        <div>
+                            <h3 className="font-semibold mb-1">Hình ảnh đính kèm</h3>
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                                {refundRequestData.images.map((image, index) => (
+                                    <img
+                                        key={index}
+                                        src={`http://127.0.0.1:8000/storage/${image}`}
+                                        alt={`Refund image ${index + 1}`}
+                                        className="w-full h-24 object-cover rounded"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Ảnh chứng minh hoàn tiền (nếu có) */}
+                    {refundRequestData.proof_image_url && (
+                        <div>
+                            <h3 className="font-semibold mb-1">Ảnh chứng minh hoàn tiền</h3>
+                            <div className="mt-2">
+                                <img
+                                    src={refundRequestData.proof_image_url}
+                                    alt="Proof of refund"
+                                    className="w-full h-48 object-contain rounded"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Thời gian */}
+                    <div className="text-sm text-gray-600 space-y-1">
+                         <p>Yêu cầu lúc: {refundRequestData.created_at}</p>
+                        {refundRequestData.approved_at && (
+                            <p>Phê duyệt lúc: {refundRequestData.approved_at}</p>
+                        )}
+                        {refundRequestData.refunded_at && (
+                            <p>Hoàn tiền lúc: {refundRequestData.refunded_at}</p>
+                        )}
+                         {refundRequestData.reject_reason && (
+                            <p>Lý do từ chối: <span className='text-red-600 font-normal'>{refundRequestData.reject_reason}</span></p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ReviewModal = ({ isOpen, onClose, orderId, orderItem, onSuccess }) => {
     const [rating, setRating] = useState(5);
@@ -197,7 +299,6 @@ const ReviewModal = ({ isOpen, onClose, orderId, orderItem, onSuccess }) => {
 const OrderDetail = () => {
     // Hooks và state management
     const { id } = useParams();
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     // State cho các modal
@@ -205,6 +306,7 @@ const OrderDetail = () => {
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [showCompleteModal, setShowCompleteModal] = useState(false);
     const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
+    const [showRefundRequestModal, setShowRefundRequestModal] = useState(false);
     const [selectedReview, setSelectedReview] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
     const [bankName, setBankName] = useState('');
@@ -611,7 +713,10 @@ const OrderDetail = () => {
                             ))}
                         </div>
                     )}
-                    {/* Lịch sử đơn hàng */}
+                    {/* Phần hoàn tiền nếu có */} 
+                 
+
+                    {/* Lịch sử đơn hàng */} 
                     {orderDetail?.histories && orderDetail.histories.length > 0 && (
                         <div className="p-6 border-t">
                             <h3 className="font-medium mb-4">Lịch sử đơn hàng</h3>
@@ -631,6 +736,18 @@ const OrderDetail = () => {
                         <div className="p-6 border-t bg-red-50">
                             <h3 className="font-medium text-red-600 mb-2">Lý do hủy</h3>
                             <p className="text-gray-600">{orderDetail.cancel_reason}</p>
+                        </div>
+                    )}
+
+                    {/* Nút xem chi tiết yêu cầu hoàn tiền */} 
+                    {orderDetail?.refund_request && (
+                        <div className="p-6 border-t flex justify-end">
+                            <button
+                                onClick={() => setShowRefundRequestModal(true)}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                            >
+                                Xem chi tiết yêu cầu hoàn tiền
+                            </button>
                         </div>
                     )}
                 </div>
@@ -975,6 +1092,14 @@ const OrderDetail = () => {
                     </div>
                 </div>
             )}
+
+            {/* Refund Request Detail Modal */} 
+            <RefundRequestModal
+                isOpen={showRefundRequestModal}
+                onClose={() => setShowRefundRequestModal(false)}
+                refundRequestData={orderDetail?.refund_request}
+                formatPrice={formatPrice}
+            />
         </>
     );
 };

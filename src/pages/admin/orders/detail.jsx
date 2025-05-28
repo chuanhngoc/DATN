@@ -811,7 +811,7 @@ const OrderDetailAdmin = () => {
 										{order.refund.images?.map((image, index) => (
 											<div key={index} className="relative aspect-square">
 												<img
-													src={`${image}`}
+													src={`http://127.0.0.1:8000/storage/${image}`}
 													alt={`Refund image ${index + 1}`}
 													className="w-full h-full object-cover rounded-lg"
 												/>
